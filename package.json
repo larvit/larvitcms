@@ -1,0 +1,45 @@
+{
+	"author": {
+		"name": "Mikael 'Lilleman' Göransson",
+		"email": "lilleman@larvit.se",
+		"url": "http://github.com/larvit/larvitcms"
+	},
+	"private": false,
+	"dependencies": {
+		"underscore.string": "latest",
+		"larvitdb": "latest",
+		"winston": "latest"
+	},
+	"description": "Simple blog module with admin GUI for larvitadmingui",
+	"devDependencies": {
+		"mocha": "latest",
+		"pre-git": "latest"
+	},
+	"pre-commit": [
+		"npm test",
+		"eslint ./"
+	],
+	"keywords": [
+		"blog"
+	],
+	"main": "cms.js",
+	"name": "larvitcms",
+	"repository": {
+		"url": "https://github.com/larvit/larvitcms",
+		"type": "git"
+	},
+	"version": "0.0.1-rc1",
+	"readmeFilename": "README.md",
+	"bugs": {
+		"url": "https://github.com/larvit/larvitcms/issues"
+	},
+	"homepage": "https://github.com/larvit/larvitcms",
+	"scripts": {
+		"test": "mocha"
+	},
+	"license": "MIT",
+	"maintainers": [{
+		"name": "lilleman",
+		"email": "lilleman@larvit.se"
+	}]
+}

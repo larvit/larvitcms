@@ -1,0 +1,12 @@
+<div class="row">
+	<div class="six columns">
+		<a href="/adminCmsPages" class="button">Cancel</a>
+		<% if (global.urlParsed.query.id) { %>
+			<button type="submit" name="delete">Delete entry</button>
+		<% } %>
+	</div>
+
+	<div class="six columns text_right">
+		<button type="submit" name="save" value="save">Save</button>
+	</div>
+</div>

@@ -1,0 +1,21 @@
+<%= _.render('inc/head', obj) %>
+<%= _.render('inc/page_top', obj) %>
+<table>
+	<thead>
+		<tr>
+			<th>Id</th>
+			<th>Name</th>
+			<th>Published</th>
+		</tr>
+	</thead>
+	<tbody>
+	<% _.each(cmsPages, function(page) { %>
+		<tr>
+			<td><a href="adminCmsPageEdit?langs=sv,en&id=<%= page.id %>"><%= page.id %></a></td>
+			<td><%= page.name %></td>
+			<td><% if (page.published) print('Yes'); else print('No'); %></td>
+		</tr>
+	<% }) %>
+	</tbody>
+</table>
+<%= _.render('inc/pageBottom', obj) %>
