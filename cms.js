@@ -120,12 +120,12 @@ function getPages(options, cb) {
 		i = 0;
 		while (options.slugs[i] !== undefined) {
 			sql += '?,';
-			dbFields(options.slugs[i]);
+			dbFields.push(options.slugs[i]);
 
 			i ++;
 		}
 
-		sql = sql.substring(0, sql.length - 1) + ')\n';
+		sql = sql.substring(0, sql.length - 1) + '))\n';
 	}
 
 	// Only get posts with given ids
