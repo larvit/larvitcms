@@ -4,7 +4,7 @@ var db           = require('larvitdb'),
     log          = require('winston'),
     async        = require('async'),
     events       = require('events'),
-    slugify      = require('underscore.string/slugify'),
+    slugify      = require('larvitslugify'),
     eventEmitter = new events.EventEmitter(),
     dbChecked    = false;
 
@@ -322,7 +322,7 @@ function savePage(data, cb) {
 	if (data.langs) {
 		for (lang in data.langs) {
 			if (data.langs[lang].slug)
-				data.langs[lang].slug = slugify(data.langs[lang].slug);
+				data.langs[lang].slug = slugify(data.langs[lang].slug, {'save': '/'});
 
 			if (data.langs[lang].htmlTitle || data.langs[lang].body)
 				addEntryData(lang, data.langs[lang].htmlTitle, data.langs[lang].body, data.langs[lang].slug);
