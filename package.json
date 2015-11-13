@@ -2,13 +2,14 @@
 	"author": {
 		"name": "Mikael 'Lilleman' Göransson",
 		"email": "lilleman@larvit.se",
-		"url": "http://github.com/larvit/larvitcms"
+		"url": "http://larvit.se"
 	},
 	"private": false,
 	"dependencies": {
 		"larvitslugify": "latest",
 		"larvitdb": "latest",
-		"winston": "latest"
+		"winston": "latest",
+		"async": "latest"
 	},
 	"description": "Simple blog module with admin GUI for larvitadmingui",
 	"devDependencies": {
@@ -28,7 +29,7 @@
 		"url": "https://github.com/larvit/larvitcms",
 		"type": "git"
 	},
-	"version": "0.0.1-rc3",
+	"version": "0.0.1-rc4",
 	"readmeFilename": "README.md",
 	"bugs": {
 		"url": "https://github.com/larvit/larvitcms/issues"
