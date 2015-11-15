@@ -44,7 +44,7 @@ createTablesIfNotExists(function(err) {
  *                        'slugs': ['blu', 'bla'],
  *                        'ids': [32,4],
  *                        'published': true, // Or false, to get both, set to undefined
- *                        'limit': 10, // Defaults to 10
+ *                        'limit': 10, // Defaults to 10, explicitly give false to remove limit
  *                        'offset': 20
  *                      }
  * @param func cb - callback(err, pages)
@@ -150,10 +150,13 @@ function getPages(options, cb) {
 	}
 
 	sql += 'ORDER BY p.published DESC, p.name\n';
-	sql += 'LIMIT ' + parseInt(options.limit) + '\n';
 
-	if (options.offset !== undefined)
-		sql += ' OFFSET ' + parseInt(options.offset);
+	if (options.limit !== false) {
+		sql += 'LIMIT ' + parseInt(options.limit) + '\n';
+
+		if (options.offset !== undefined)
+			sql += ' OFFSET ' + parseInt(options.offset);
+	}
 
 	db.query(sql, dbFields, function(err, rows) {
 		var pageId,

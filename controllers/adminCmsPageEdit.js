@@ -17,6 +17,7 @@ exports.run = function(req, res, callback) {
 
 	// Save a POSTed form
 	if (res.globalData.formFields.save !== undefined) {
+		console.log(res.globalData.formFields);
 		tasks.push(function(cb) {
 			var saveObj = {'name': res.globalData.formFields.name, 'langs': {}},
 			    fieldName,

@@ -3,10 +3,14 @@
 <script src="//tinymce.cachefly.net/4.2/tinymce.min.js"></script>
 <script>tinymce.init({
 	'selector': 'textarea',
-	'toolbar': 'undo redo | bold italic underline strikethrough | subscript superscript | link unlink | removeformat',
+	'toolbar': 'undo redo | formatselect bold italic underline strikethrough | subscript superscript | link unlink image | removeformat code',
 	'menubar': false,
-	'plugins': 'link',
-	'valid_elements': 'p,strong,a,em,span,sup,sub,h1,h2,h3,img'
+	'plugins': 'link image code',
+    'image_list': [
+        {title: 'My image 1', value: 'https://i.ytimg.com/vi/yaqe1qesQ8c/maxresdefault.jpg'},
+        {title: 'My image 2', value: 'http://i.dailymail.co.uk/i/pix/2008/12/21/article-1099422-02DDB63E000005DC-840_634x373.jpg'}
+    ],
+	'valid_elements': 'p,strong,a,em,span,sup,sub,h1,h2,h3,img[id|lang|longdesc|src|alt|title|width|height|rel]'
 });</script>
 <form method="post">
 

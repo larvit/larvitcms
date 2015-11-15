@@ -12,7 +12,7 @@ exports.run = function(req, res, callback) {
 		return;
 	}
 
-	cms.getPages(function(err, rows) {
+	cms.getPages({'limit': false}, function(err, rows) {
 		data.cmsPages = rows;
 		callback(null, req, res, data);
 	});
