@@ -1,0 +1,38 @@
+<%= _.render('inc/head', obj) %>
+<%= _.render('inc/page_top', obj) %>
+<script src="//tinymce.cachefly.net/4.2/tinymce.min.js"></script>
+<script>tinymce.init({
+	'selector': 'textarea',
+	'toolbar': 'undo redo | formatselect bold italic underline strikethrough | subscript superscript | link unlink image | removeformat code',
+	'menubar': false,
+	'plugins': 'link image code',
+	'valid_elements': 'p,strong,a,em,span,sup,sub,h1,h2,h3,img[id|lang|longdesc|src|alt|title|width|height|rel]'
+});</script>
+<form method="post">
+
+	<%= _.render('inc/adminCmsSnippetEditControls', obj) %>
+
+	<fieldset>
+		<legend>Snippet</legend>
+
+		<div class="row">
+			<div class="three columns">
+				<label for="slug">Slug</label>
+				<input type="text" value="<%= global.urlParsed.query.slug %>" disabled="disabled" />
+			</div>
+		</div>
+
+	<% if ( ! global.urlParsed.query.langs) global.urlParsed.query.langs = 'en'; %>
+
+	<% _.each(global.urlParsed.query.langs.split(','), function(lang) { %>
+		<div class="row">
+			<label for="body.<%= lang %>">Snippet content, language: <%= lang %></label>
+			<textarea class="u-full-width" name="body.<%= lang %>" rows="20"><% if (global.formFields['body.' + lang]) print(global.formFields['body.' + lang]) %></textarea>
+		</div>
+	</fieldset>
+	<% }); %>
+
+	<%= _.render('inc/adminCmsSnippetEditControls', obj) %>
+
+</form>
+<%= _.render('inc/pageBottom', obj) %>

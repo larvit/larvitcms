@@ -27,14 +27,104 @@ function createTablesIfNotExists(cb) {
 				return;
 			}
 
-			dbChecked = true;
-			eventEmitter.emit('checked');
+			sql = 'CREATE TABLE IF NOT EXISTS `cms_snippets` ( `slug` varchar(100) CHARACTER SET ascii NOT NULL,`lang` char(2) CHARACTER SET ascii NOT NULL DEFAULT \'en\',`body` text COLLATE utf8mb4_unicode_ci NOT NULL,PRIMARY KEY (`slug`,`lang`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;';
+
+			db.query(sql, function(err) {
+				if (err) {
+					cb(err);
+					return;
+				}
+
+				dbChecked = true;
+				eventEmitter.emit('checked');
+			});
 		});
 	});
 }
 createTablesIfNotExists(function(err) {
 	log.error('larvitcms: createTablesIfNotExists() - Database error: ' + err.message);
 });
+
+/**
+ * Get snippets
+ *
+ * @param obj options - slugs....
+ * @param func cb(err, slugs)
+ */
+function getSnippets(options, cb) {
+	var dbFields = [],
+	    sql,
+	    i;
+
+	if (typeof options === 'function') {
+		cb      = options;
+		options = {};
+	}
+
+	if (options.onlySlugs) {
+		sql = 'SELECT DISTINCT slug FROM cms_snippets ORDER BY slug;';
+		db.query(sql, cb);
+		return;
+	}
+
+	sql  = 'SELECT * FROM cms_snippets\n';
+	sql += 'WHERE 1 + 1\n';
+
+	if (options.slugs !== undefined) {
+		if (typeof options.slugs === 'string')
+			options.slugs = [options.slugs];
+
+		if (options.slugs.length === 0)
+			options.slugs = [''];
+
+		sql += '	AND slug IN (';
+
+		i = 0;
+		while (options.slugs[i] !== undefined) {
+			sql += '?,';
+			dbFields.push(options.slugs[i]);
+
+			i ++;
+		}
+
+		sql = sql.substring(0, sql.length - 1) + ')\n';
+	}
+
+	sql += 'ORDER BY slug, lang';
+
+	db.query(sql, dbFields, function(err, rows) {
+		var snippets = [],
+		    snippet,
+		    prevSlug;
+
+		if (err) {
+			cb(err);
+			return;
+		}
+
+		i = 0;
+		while (rows[i] !== undefined) {
+			if (prevSlug !== rows[i].slug) {
+				if (snippet)
+					snippets.push(snippet);
+
+				snippet = {'slug': rows[i].slug, 'langs': {}};
+			}
+
+			prevSlug = rows[i].slug;
+
+			snippet.langs[rows[i].lang] = rows[i].body;
+
+			i ++;
+		}
+
+		// Add the last one
+		if (snippet)
+			snippets.push(snippet);
+
+		cb(null, snippets);
+	});
+}
 
 /**
  * Get pages
@@ -206,6 +296,13 @@ function rmPage(id, cb) {
 	});
 }
 
+function saveSnippet(options, cb) {
+	var sql      = 'UPDATE cms_snippets SET body = ? WHERE slug = ? AND lang = ?',
+	    dbFields = [options.body, options.slug, options.lang];
+
+	db.query(sql, dbFields, cb);
+}
+
 /**
  * Save a page
  *
@@ -350,6 +447,8 @@ function savePage(data, cb) {
 	});
 };
 
-exports.getPages = getPages;
-exports.rmPage   = rmPage;
-exports.savePage = savePage;
+exports.getSnippets = getSnippets;
+exports.getPages    = getPages;
+exports.rmPage      = rmPage;
+exports.saveSnippet = saveSnippet;
+exports.savePage    = savePage;

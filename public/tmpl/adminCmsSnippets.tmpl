@@ -1,0 +1,17 @@
+<%= _.render('inc/head', obj) %>
+<%= _.render('inc/page_top', obj) %>
+<table>
+	<thead>
+		<tr>
+			<th>Slug</th>
+		</tr>
+	</thead>
+	<tbody>
+	<% _.each(cmsSnippets, function(snippet) { %>
+		<tr>
+			<td><a href="adminCmsSnippetEdit?langs=sv,en&slug=<%= snippet.slug %>"><%= snippet.slug %></a></td>
+		</tr>
+	<% }) %>
+	</tbody>
+</table>
+<%= _.render('inc/pageBottom', obj) %>
