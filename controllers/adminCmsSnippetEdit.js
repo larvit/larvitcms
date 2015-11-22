@@ -1,7 +1,8 @@
 'use strict';
 
 var async = require('async'),
-    cms   = require('larvitcms');
+    cms   = require('larvitcms'),
+    _     = require('lodash');
 
 exports.run = function(req, res, callback) {
 	var data  = {'global': res.globalData},
@@ -23,7 +24,7 @@ exports.run = function(req, res, callback) {
 
 			function addTask(lang, body) {
 				tasks.push(function(cb) {
-					cms.saveSnippet({'slug': slug, 'lang': lang, 'body': body}, cb);
+					cms.saveSnippet({'slug': _.trimRight(slug, '/'), 'lang': lang, 'body': body}, cb);
 				});
 			}
 

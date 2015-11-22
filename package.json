@@ -6,10 +6,11 @@
 	},
 	"private": false,
 	"dependencies": {
-		"larvitslugify": "latest",
+		"async": "latest",
 		"larvitdb": "latest",
-		"winston": "latest",
-		"async": "latest"
+		"larvitslugify": "latest",
+		"lodash": "latest",
+		"winston": "latest"
 	},
 	"description": "Simple blog module with admin GUI for larvitadmingui",
 	"devDependencies": {
@@ -29,7 +30,7 @@
 		"url": "https://github.com/larvit/larvitcms",
 		"type": "git"
 	},
-	"version": "0.0.1-rc8",
+	"version": "0.0.1-rc9",
 	"readmeFilename": "README.md",
 	"bugs": {
 		"url": "https://github.com/larvit/larvitcms/issues"
