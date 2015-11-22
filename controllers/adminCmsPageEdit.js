@@ -1,7 +1,8 @@
 'use strict';
 
 var async = require('async'),
-    cms   = require('larvitcms');
+    cms   = require('larvitcms'),
+    _     = require('lodash');
 
 exports.run = function(req, res, callback) {
 	var data   = {'global': res.globalData},
@@ -40,10 +41,11 @@ exports.run = function(req, res, callback) {
 					if (saveObj.langs[lang] === undefined)
 						saveObj.langs[lang] = {};
 
-					if ( ! res.globalData.formFields[field])
+					if ( ! res.globalData.formFields[field]) {
 						saveObj.langs[lang][fieldName] = null;
-					else
-						saveObj.langs[lang][fieldName] = res.globalData.formFields[field];
+					} else {
+						saveObj.langs[lang][fieldName] = _.trimRight(res.globalData.formFields[field], '/');
+					}
 				}
 			}
 
