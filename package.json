@@ -30,7 +30,7 @@
 		"url": "https://github.com/larvit/larvitcms",
 		"type": "git"
 	},
-	"version": "0.0.1-rc9",
+	"version": "0.0.1-rc10",
 	"readmeFilename": "README.md",
 	"bugs": {
 		"url": "https://github.com/larvit/larvitcms/issues"

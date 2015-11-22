@@ -44,7 +44,10 @@ exports.run = function(req, res, callback) {
 					if ( ! res.globalData.formFields[field]) {
 						saveObj.langs[lang][fieldName] = null;
 					} else {
-						saveObj.langs[lang][fieldName] = _.trimRight(res.globalData.formFields[field], '/');
+						if (fieldName === 'slug')
+							_.trimRight(res.globalData.formFields[field], '/');
+
+						saveObj.langs[lang][fieldName] = res.globalData.formFields[field];
 					}
 				}
 			}
