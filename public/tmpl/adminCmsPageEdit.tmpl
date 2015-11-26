@@ -59,10 +59,10 @@
 <script>
 tinymce.init({
 	'selector': 'textarea',
-	'toolbar': 'undo redo | formatselect bold italic underline strikethrough | subscript superscript | link unlink image | removeformat code',
+	'toolbar': 'undo redo | formatselect bold italic underline strikethrough | subscript superscript | link unlink image | table | removeformat code',
 	'menubar': false,
-	'plugins': 'link image code',
-	'valid_elements': 'p,strong,a[href],em,span,sup,sub,h1,h2,h3,img[id|lang|longdesc|src|alt|title|width|height|rel]'
+	'plugins': 'link image code table',
+	'valid_elements': 'table,tr[colspan|rowspan],td[colspan|rowspan],th,thead,tbody,p,strong,a[href],em,span,sup,sub,h1,h2,h3,img[id|lang|longdesc|src|alt|title|width|height|rel]'
 });
 </script>
 <%= _.render('inc/pageBottom', obj) %>
