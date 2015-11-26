@@ -12,22 +12,17 @@ var db           = require('larvitdb'),
 function createTablesIfNotExists(cb) {
 	var sql;
 
-	sql = 'CREATE TABLE IF NOT EXISTS `cms_pages` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, `name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, `published` tinyint(3) unsigned NOT NULL DEFAULT \'0\', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;';
-	db.query(sql, function(err) {
-		if (err) {
-			cb(err);
-			return;
-		}
+	log.debug('larvitcms: createTablesIfNotExists() - Running');
 
-		sql = 'CREATE TABLE IF NOT EXISTS `cms_pagesData` (`pageId` int(10) unsigned NOT NULL, `lang` char(2) CHARACTER SET ascii NOT NULL, `htmlTitle` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL, `slug` varchar(100) CHARACTER SET ascii NOT NULL, `body` text COLLATE utf8mb4_unicode_ci NOT NULL, PRIMARY KEY (`pageId`,`lang`), CONSTRAINT `cms_pagesData_ibfk_1` FOREIGN KEY (`pageId`) REFERENCES `cms_pages` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;';
-
+	db.ready(function() {
+		sql = 'CREATE TABLE IF NOT EXISTS `cms_pages` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, `name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, `published` tinyint(3) unsigned NOT NULL DEFAULT \'0\', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;';
 		db.query(sql, function(err) {
 			if (err) {
 				cb(err);
 				return;
 			}
 
-			sql = 'CREATE TABLE IF NOT EXISTS `cms_snippets` ( `slug` varchar(100) CHARACTER SET ascii NOT NULL,`lang` char(2) CHARACTER SET ascii NOT NULL DEFAULT \'en\',`body` text COLLATE utf8mb4_unicode_ci NOT NULL,PRIMARY KEY (`slug`,`lang`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;';
+			sql = 'CREATE TABLE IF NOT EXISTS `cms_pagesData` (`pageId` int(10) unsigned NOT NULL, `lang` char(2) CHARACTER SET ascii NOT NULL, `htmlTitle` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL, `slug` varchar(100) CHARACTER SET ascii NOT NULL, `body` text COLLATE utf8mb4_unicode_ci NOT NULL, PRIMARY KEY (`pageId`,`lang`), CONSTRAINT `cms_pagesData_ibfk_1` FOREIGN KEY (`pageId`) REFERENCES `cms_pages` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;';
 
 			db.query(sql, function(err) {
 				if (err) {
@@ -35,8 +30,17 @@ function createTablesIfNotExists(cb) {
 					return;
 				}
 
-				dbChecked = true;
-				eventEmitter.emit('checked');
+				sql = 'CREATE TABLE IF NOT EXISTS `cms_snippets` ( `slug` varchar(100) CHARACTER SET ascii NOT NULL,`lang` char(2) CHARACTER SET ascii NOT NULL DEFAULT \'en\',`body` text COLLATE utf8mb4_unicode_ci NOT NULL,PRIMARY KEY (`slug`,`lang`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;';
+
+				db.query(sql, function(err) {
+					if (err) {
+						cb(err);
+						return;
+					}
+
+					dbChecked = true;
+					eventEmitter.emit('checked');
+				});
 			});
 		});
 	});
@@ -60,6 +64,18 @@ function getSnippets(options, cb) {
 		cb      = options;
 		options = {};
 	}
+
+	// Make sure the database tables exists before going further!
+	if ( ! dbChecked) {
+		log.debug('larvitcms: getSnippets() - Database not checked, rerunning this method when event have been emitted.');
+		eventEmitter.on('checked', function() {
+			log.debug('larvitcms: getSnippets() - Database check event received, rerunning getSnippets().');
+			getSnippets(options, cb);
+		});
+
+		return;
+	}
+
 
 	if (options.onlySlugs) {
 		sql = 'SELECT DISTINCT slug FROM cms_snippets ORDER BY slug;';
