@@ -10,6 +10,7 @@
 		"larvitdb": "latest",
 		"larvitslugify": "latest",
 		"lodash": "latest",
+		"randomstring": "latest",
 		"winston": "latest"
 	},
 	"description": "Simple blog module with admin GUI for larvitadmingui",
@@ -30,7 +31,7 @@
 		"url": "https://github.com/larvit/larvitcms",
 		"type": "git"
 	},
-	"version": "0.0.1-rc10",
+	"version": "0.0.1",
 	"readmeFilename": "README.md",
 	"bugs": {
 		"url": "https://github.com/larvit/larvitcms/issues"

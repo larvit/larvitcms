@@ -18,6 +18,18 @@ exports.run = function(req, res, callback) {
 
 	// Save a POSTed form
 	if (res.globalData.formFields.save !== undefined) {
+		// Basic form validation
+		tasks.push(function(cb) {
+			if ( ! res.globalData.formFields.name) {
+				res.globalData.errors = ['Page name is required'];
+				cb(new Error('Invalid fields'));
+				return;
+			}
+
+			cb();
+		});
+
+		// Save the data
 		tasks.push(function(cb) {
 			var saveObj = {'name': res.globalData.formFields.name, 'langs': {}},
 			    fieldName,
@@ -45,7 +57,7 @@ exports.run = function(req, res, callback) {
 						saveObj.langs[lang][fieldName] = null;
 					} else {
 						if (fieldName === 'slug')
-							_.trimRight(res.globalData.formFields[field], '/');
+							res.globalData.formFields[field] = _.trimRight(res.globalData.formFields[field], '/');
 
 						saveObj.langs[lang][fieldName] = res.globalData.formFields[field];
 					}
@@ -112,7 +124,7 @@ exports.run = function(req, res, callback) {
 		});
 	}
 
-	async.series(tasks, function(err) {
-		callback(err, req, res, data);
+	async.series(tasks, function() {
+		callback(null, req, res, data);
 	});
 };

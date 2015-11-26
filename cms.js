@@ -440,7 +440,10 @@ function savePage(data, cb) {
 			if (data.langs[lang].slug)
 				data.langs[lang].slug = slugify(data.langs[lang].slug, {'save': '/'});
 
-			if (data.langs[lang].htmlTitle || data.langs[lang].body)
+			if ( ! data.langs[lang].slug)
+				data.langs[lang].slug = slugify(data.langs[lang].htmlTitle);
+
+			if (data.langs[lang].htmlTitle && data.langs[lang].body)
 				addEntryData(lang, data.langs[lang].htmlTitle, data.langs[lang].body, data.langs[lang].slug);
 		}
 	}
