@@ -313,7 +313,7 @@ function rmPage(id, cb) {
 }
 
 function saveSnippet(options, cb) {
-	var sql      = 'UPDATE cms_snippets SET body = ? WHERE slug = ? AND lang = ?',
+	var sql      = 'REPLACE INTO cms_snippets (body, slug, lang) VALUES(?, ?, ?);',
 	    dbFields = [options.body, options.slug, options.lang];
 
 	db.query(sql, dbFields, cb);

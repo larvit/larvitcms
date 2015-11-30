@@ -51,8 +51,9 @@ exports.run = function(req, res, callback) {
 		cms.getSnippets({'slugs': slug}, function(err, snippets) {
 			var lang;
 
-			for (lang in snippets[0].langs)
-				res.globalData.formFields['body.' + lang] = snippets[0].langs[lang];
+			if (snippets[0] !== undefined)
+				for (lang in snippets[0].langs)
+					res.globalData.formFields['body.' + lang] = snippets[0].langs[lang];
 
 			cb();
 		});
