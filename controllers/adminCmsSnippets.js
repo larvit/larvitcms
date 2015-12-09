@@ -12,6 +12,9 @@ exports.run = function(req, res, callback) {
 		return;
 	}
 
+	if (res.langs)
+		data.global.langs = res.langs;
+
 	cms.getSnippets({'onlySlugs': true}, function(err, snippets) {
 		data.cmsSnippets = snippets;
 		callback(null, req, res, data);

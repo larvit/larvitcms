@@ -11,7 +11,7 @@
 	<tbody>
 	<% _.each(cmsPages, function(page) { %>
 		<tr>
-			<td><a href="adminCmsPageEdit?langs=sv,en&id=<%= page.id %>"><%= page.id %></a></td>
+			<td><a href="adminCmsPageEdit?langs=<% if(global.langs){print(global.langs.join(','));}else{print('en');} %>&id=<%= page.id %>"><%= page.id %></a></td>
 			<td><%= page.name %></td>
 			<td><% if (page.published) print('Yes'); else print('No'); %></td>
 		</tr>

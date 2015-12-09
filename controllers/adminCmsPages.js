@@ -12,6 +12,9 @@ exports.run = function(req, res, callback) {
 		return;
 	}
 
+	if (res.langs)
+		data.global.langs = res.langs;
+
 	cms.getPages({'limit': false}, function(err, rows) {
 		data.cmsPages = rows;
 		callback(null, req, res, data);
