@@ -72,10 +72,14 @@ exports.run = function(req, res, callback) {
 
 				// Redirect to a new URL if a new pageId was created
 				if ( ! pageId) {
+					req.session.data.nextCallData = {'global': {'messages': ['New page created with ID ' + entry.id]}};
 					res.statusCode = 302;
 					res.setHeader('Location', '/adminCmsPageEdit?id=' + entry.id + '&langs=' + res.globalData.urlParsed.query.langs);
 					pageId = entry.id;
 				}
+
+				data.global.messages = ['Saved'];
+
 				cb();
 			});
 		});
@@ -90,6 +94,7 @@ exports.run = function(req, res, callback) {
 					return;
 				}
 
+				req.session.data.nextCallData = {'global': {'messages': ['Page with ID ' + pageId + ' deleted']}};
 				res.statusCode = 302;
 				res.setHeader('Location', '/adminCmsPages');
 				cb();
