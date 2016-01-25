@@ -6,17 +6,17 @@
 	},
 	"private": false,
 	"dependencies": {
-		"async": "~1.5",
-		"larvitdb": "~0.4",
-		"larvitslugify": "~0.10",
-		"lodash": "~4.0",
-		"randomstring": "~1.1",
-		"winston": "~2.1"
+		"async": "^1",
+		"larvitdb": "^0.4",
+		"larvitslugify": "^0.10",
+		"lodash": "^4",
+		"randomstring": "^1",
+		"winston": "^2"
 	},
 	"description": "Simple blog module with admin GUI for larvitadmingui",
 	"devDependencies": {
-		"mocha": "latest",
-		"pre-git": "latest"
+		"mocha": "^2",
+		"pre-git": "^3"
 	},
 	"pre-commit": [
 		"npm test",
@@ -31,7 +31,7 @@
 		"url": "https://github.com/larvit/larvitcms",
 		"type": "git"
 	},
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"readmeFilename": "README.md",
 	"bugs": {
 		"url": "https://github.com/larvit/larvitcms/issues"
