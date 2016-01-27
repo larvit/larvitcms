@@ -57,7 +57,7 @@ exports.run = function(req, res, callback) {
 						saveObj.langs[lang][fieldName] = null;
 					} else {
 						if (fieldName === 'slug')
-							res.globalData.formFields[field] = _.trimRight(res.globalData.formFields[field], '/');
+							res.globalData.formFields[field] = _.trimEnd(res.globalData.formFields[field], '/');
 
 						saveObj.langs[lang][fieldName] = res.globalData.formFields[field];
 					}
