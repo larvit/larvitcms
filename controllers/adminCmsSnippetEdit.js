@@ -24,7 +24,7 @@ exports.run = function(req, res, callback) {
 
 			function addTask(lang, body) {
 				tasks.push(function(cb) {
-					cms.saveSnippet({'slug': _.trimRight(slug, '/'), 'lang': lang, 'body': body}, cb);
+					cms.saveSnippet({'slug': _.trimEnd(slug, '/'), 'lang': lang, 'body': body}, cb);
 				});
 			}
 
