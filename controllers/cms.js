@@ -1,24 +1,26 @@
 'use strict';
 
-const lfs = require('larvitfs'),
-      cms = require('larvitcms'),
-      log = require('winston');
+const	logPrefix	= 'larvitcms: controllers/cms.js - ',
+	lfs	= require('larvitfs'),
+	cms	= require('larvitcms'),
+	log	= require('winston');
 
 function call404(req, res, cb) {
-	res.templateName = '404';
+	res.templateName	= '404';
 
 	if (lfs.getPathSync('controllers/404.js')) {
 		require(lfs.getPathSync('controllers/404.js')).run(req, res, cb);
 	} else {
-		const err = new Error('larvitcms: controllers/cms.js - call404() - 404 controller not found');
-		res.statusCode = 500;
-		data = {};
+		const	err	= new Error(logPrefix + 'call404() - 404 controller not found');
+
+		res.statusCode	= 500;
+		data	= {};
 		cb(err, req, res, {});
 	}
 }
 
 exports.run = function(req, res, cb) {
-	const data = {'global': res.globalData};
+	const	data	= {'global': res.globalData};
 
 	if (req.lang === undefined) {
 		if (res.langs !== undefined && res.langs[0] !== undefined) {
@@ -37,13 +39,10 @@ exports.run = function(req, res, cb) {
 	}
 
 	cms.getPages({'slugs': req.urlParsed.path}, function(err, pages) {
-		if (err) {
-			cb(err, req, res, data);
-			return;
-		}
+		if (err) return cb(err, req, res, data);
 
 		if (pages.length === 0) {
-			log.verbose('larvitcms: controllers/cms.js - CMS controller called, but no page found for slug: "' + req.urlParsed.path + '"');
+			log.verbose(logPrefix + 'CMS controller called, but no page found for slug: "' + req.urlParsed.path + '"');
 			call404(req, res, cb);
 
 			return;
@@ -51,14 +50,14 @@ exports.run = function(req, res, cb) {
 
 		// Take the first page that is found... if there are several, well, tough luck :D
 		if (pages[0] !== undefined && pages[0].langs !== undefined && pages[0].langs[req.lang] !== undefined) {
-			data.cmsData       = pages[0].langs[req.lang];
-			data.global.title += ' | ' + data.cmsData.htmlTitle;
-			data.global.slugs = {};
+			data.cmsData	= pages[0].langs[req.lang];
+			data.global.title	+= ' | ' + data.cmsData.htmlTitle;
+			data.global.slugs	= {};
 			for (const key in pages[0].langs) {
 				data.global.slugs[key] = pages[0].langs[key].slug;
 			}
 		} else {
-			log.verbose('larvitcms: controllers/cms.js - CMS controller called, but no content found for slug: "' + req.urlParsed.path + '" and lang: "' + req.lang + '"');
+			log.verbose(logPrefix + 'CMS controller called, but no content found for slug: "' + req.urlParsed.path + '" and lang: "' + req.lang + '"');
 			call404(req, res, cb);
 			return;
 		}

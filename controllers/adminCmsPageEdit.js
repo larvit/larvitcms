@@ -1,20 +1,17 @@
 'use strict';
 
-var async = require('async'),
-    cms   = require('larvitcms'),
-    _     = require('lodash');
+const	async	= require('async'),
+	cms	= require('larvitcms'),
+	_	= require('lodash');
 
-exports.run = function(req, res, callback) {
-	var data   = {'global': res.globalData},
-	    pageId = res.globalData.urlParsed.query.id,
-	    tasks  = [];
+exports.run = function(req, res, cb) {
+	const	pageId	= res.globalData.urlParsed.query.id,
+		data	= {'global': res.globalData},
+		tasks	= [];
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
-	if ( ! res.adminRights) {
-		callback(new Error('Invalid rights'), req, res, {});
-		return;
-	}
+	if ( ! res.adminRights) return cb(new Error('Invalid rights'), req, res, {});
 
 	// Save a POSTed form
 	if (res.globalData.formFields.save !== undefined) {
@@ -31,10 +28,11 @@ exports.run = function(req, res, callback) {
 
 		// Save the data
 		tasks.push(function(cb) {
-			var saveObj = {'name': res.globalData.formFields.name, 'langs': {}},
-			    fieldName,
-			    field,
-			    lang;
+			const	saveObj = {'name': res.globalData.formFields.name, 'langs': {}};
+
+			let	fieldName,
+				field,
+				lang;
 
 			if (pageId !== undefined)
 				saveObj.id = pageId;
@@ -47,17 +45,19 @@ exports.run = function(req, res, callback) {
 
 			for (field in res.globalData.formFields) {
 				if (field.split('.').length === 2) {
-					fieldName = field.split('.')[0];
-					lang      = field.split('.')[1];
+					fieldName	= field.split('.')[0];
+					lang	= field.split('.')[1];
 
-					if (saveObj.langs[lang] === undefined)
+					if (saveObj.langs[lang] === undefined) {
 						saveObj.langs[lang] = {};
+					}
 
 					if ( ! res.globalData.formFields[field]) {
 						saveObj.langs[lang][fieldName] = null;
 					} else {
-						if (fieldName === 'slug')
+						if (fieldName === 'slug') {
 							res.globalData.formFields[field] = _.trimEnd(res.globalData.formFields[field], '/');
+						}
 
 						saveObj.langs[lang][fieldName] = res.globalData.formFields[field];
 					}
@@ -65,17 +65,14 @@ exports.run = function(req, res, callback) {
 			}
 
 			cms.savePage(saveObj, function(err, entry) {
-				if (err) {
-					cb(err);
-					return;
-				}
+				if (err) return cb(err);
 
 				// Redirect to a new URL if a new pageId was created
 				if ( ! pageId) {
-					req.session.data.nextCallData = {'global': {'messages': ['New page created with ID ' + entry.id]}};
-					res.statusCode = 302;
+					req.session.data.nextCallData	= {'global': {'messages': ['New page created with ID ' + entry.id]}};
+					res.statusCode	= 302;
 					res.setHeader('Location', '/adminCmsPageEdit?id=' + entry.id + '&langs=' + res.globalData.urlParsed.query.langs);
-					pageId = entry.id;
+					pageId	= entry.id;
 				}
 
 				data.global.messages = ['Saved'];
@@ -89,13 +86,10 @@ exports.run = function(req, res, callback) {
 	if (res.globalData.formFields.delete !== undefined && pageId !== undefined) {
 		tasks.push(function(cb) {
 			cms.rmPage(pageId, function(err) {
-				if (err) {
-					cb(err);
-					return;
-				}
+				if (err) return cb(err);
 
-				req.session.data.nextCallData = {'global': {'messages': ['Page with ID ' + pageId + ' deleted']}};
-				res.statusCode = 302;
+				req.session.data.nextCallData	= {'global': {'messages': ['Page with ID ' + pageId + ' deleted']}};
+				res.statusCode	= 302;
 				res.setHeader('Location', '/adminCmsPages');
 				cb();
 			});
@@ -106,18 +100,18 @@ exports.run = function(req, res, callback) {
 	else if (pageId !== undefined) {
 		tasks.push(function(cb) {
 			cms.getPages({'ids': pageId}, function(err, rows) {
-				var lang;
+				let	lang;
 
 				if (rows[0] !== undefined) {
 					res.globalData.formFields = {
-						'name':      rows[0].name,
-						'published': rows[0].published,
+						'name':	rows[0].name,
+						'published':	rows[0].published,
 					};
 
 					for (lang in rows[0].langs) {
-						res.globalData.formFields['htmlTitle.' + lang] = rows[0].langs[lang].htmlTitle;
-						res.globalData.formFields['slug.'      + lang] = rows[0].langs[lang].slug;
-						res.globalData.formFields['body.'      + lang] = rows[0].langs[lang].body;
+						res.globalData.formFields['htmlTitle.'	+ lang] = rows[0].langs[lang].htmlTitle;
+						res.globalData.formFields['slug.'	+ lang] = rows[0].langs[lang].slug;
+						res.globalData.formFields['body.'	+ lang] = rows[0].langs[lang].body;
 					}
 				} else {
 					cb(new Error('larvitcms: controllers/adminCmsPageEdit.js - Wrong pageId supplied'));
@@ -130,6 +124,6 @@ exports.run = function(req, res, callback) {
 	}
 
 	async.series(tasks, function() {
-		callback(null, req, res, data);
+		cb(null, req, res, data);
 	});
 };

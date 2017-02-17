@@ -1,50 +1,42 @@
 'use strict';
 
-var db           = require('larvitdb'),
-    log          = require('winston'),
-    async        = require('async'),
-    events       = require('events'),
-    slugify      = require('larvitslugify'),
-    eventEmitter = new events.EventEmitter(),
-    dbChecked    = false;
+const	eventEmitter	= new require('events').EventEmitter(),
+	logPrefix	= 'larvitcms: ./cms.js - ',
+	slugify	= require('larvitslugify'),
+	async	= require('async'),
+	log	= require('winston'),
+	db	= require('larvitdb');
+
+let	dbChecked	= false;
 
 // Create database tables if they are missing
 function createTablesIfNotExists(cb) {
-	var sql;
+	let	sql;
 
-	log.debug('larvitcms: createTablesIfNotExists() - Running');
+	log.debug(logPrefix + 'createTablesIfNotExists() - Running');
 
 	sql = 'CREATE TABLE IF NOT EXISTS `cms_pages` (`id` int(10) unsigned NOT NULL AUTO_INCREMENT, `name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, `published` tinyint(3) unsigned NOT NULL DEFAULT \'0\', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;';
 	db.query(sql, function(err) {
-		if (err) {
-			cb(err);
-			return;
-		}
+		if (err) return cb(err);
 
 		sql = 'CREATE TABLE IF NOT EXISTS `cms_pagesData` (`pageId` int(10) unsigned NOT NULL, `lang` char(2) CHARACTER SET ascii NOT NULL, `htmlTitle` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL, `slug` varchar(100) CHARACTER SET ascii NOT NULL, `body` text COLLATE utf8mb4_unicode_ci NOT NULL, PRIMARY KEY (`pageId`,`lang`), CONSTRAINT `cms_pagesData_ibfk_1` FOREIGN KEY (`pageId`) REFERENCES `cms_pages` (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;';
 
 		db.query(sql, function(err) {
-			if (err) {
-				cb(err);
-				return;
-			}
+			if (err) return cb(err);
 
 			sql = 'CREATE TABLE IF NOT EXISTS `cms_snippets` ( `slug` varchar(100) CHARACTER SET ascii NOT NULL,`lang` char(2) CHARACTER SET ascii NOT NULL DEFAULT \'en\',`body` text COLLATE utf8mb4_unicode_ci NOT NULL,PRIMARY KEY (`slug`,`lang`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;';
 
 			db.query(sql, function(err) {
-				if (err) {
-					cb(err);
-					return;
-				}
+				if (err) return cb(err);
 
-				dbChecked = true;
+				dbChecked	= true;
 				eventEmitter.emit('checked');
 			});
 		});
 	});
 }
 createTablesIfNotExists(function(err) {
-	log.error('larvitcms: createTablesIfNotExists() - Database error: ' + err.message);
+	log.error(logPrefix + 'createTablesIfNotExists() - Database error: ' + err.message);
 });
 
 /**
@@ -54,26 +46,26 @@ createTablesIfNotExists(function(err) {
  * @param func cb(err, slugs)
  */
 function getSnippets(options, cb) {
-	var dbFields = [],
-	    sql,
-	    i;
+	const	thisLogPrefix	= logPrefix + 'getSnippets() - ',
+		dbFields = [];
+
+	let	sql;
 
 	if (typeof options === 'function') {
-		cb      = options;
-		options = {};
+		cb	= options;
+		options	= {};
 	}
 
 	// Make sure the database tables exists before going further!
 	if ( ! dbChecked) {
-		log.debug('larvitcms: getSnippets() - Database not checked, rerunning this method when event have been emitted.');
+		log.debug(thisLogPrefix + 'Database not checked, rerunning this method when event have been emitted.');
 		eventEmitter.on('checked', function() {
-			log.debug('larvitcms: getSnippets() - Database check event received, rerunning getSnippets().');
+			log.debug(thisLogPrefix + 'Database check event received, rerunning getSnippets().');
 			getSnippets(options, cb);
 		});
 
 		return;
 	}
-
 
 	if (options.onlySlugs) {
 		sql = 'SELECT DISTINCT slug FROM cms_snippets ORDER BY slug;';
@@ -81,24 +73,23 @@ function getSnippets(options, cb) {
 		return;
 	}
 
-	sql  = 'SELECT * FROM cms_snippets\n';
-	sql += 'WHERE 1 + 1\n';
+	sql	= 'SELECT * FROM cms_snippets\n';
+	sql	+= 'WHERE 1 + 1\n';
 
 	if (options.slugs !== undefined) {
-		if (typeof options.slugs === 'string')
+		if (typeof options.slugs === 'string') {
 			options.slugs = [options.slugs];
+		}
 
-		if (options.slugs.length === 0)
+		if (options.slugs.length === 0) {
 			options.slugs = [''];
+		}
 
 		sql += '	AND slug IN (';
 
-		i = 0;
-		while (options.slugs[i] !== undefined) {
+		for (let i = 0; options.slugs[i] !== undefined; i ++) {
 			sql += '?,';
 			dbFields.push(options.slugs[i]);
-
-			i ++;
 		}
 
 		sql = sql.substring(0, sql.length - 1) + ')\n';
@@ -107,7 +98,7 @@ function getSnippets(options, cb) {
 	sql += 'ORDER BY slug, lang';
 
 	db.query(sql, dbFields, function(err, rows) {
-		var snippets = [],
+		const snippets = [],
 		    snippet,
 		    prevSlug;
 
@@ -165,7 +156,7 @@ function getPages(options, cb) {
 		options = {};
 	}
 
-	log.debug('larvitcms: getPages() - Called with options: "' + JSON.stringify(options) + '"');
+	log.debug(logPrefix + 'getPages() - Called with options: "' + JSON.stringify(options) + '"');
 
 	// Make sure options that should be arrays actually are arrays
 	// This will simplify our lives in the SQL builder below
@@ -188,9 +179,9 @@ function getPages(options, cb) {
 
 	// Make sure the database tables exists before going further!
 	if ( ! dbChecked) {
-		log.debug('larvitcms: getPages() - Database not checked, rerunning this method when event have been emitted.');
+		log.debug(logPrefix + 'getPages() - Database not checked, rerunning this method when event have been emitted.');
 		eventEmitter.on('checked', function() {
-			log.debug('larvitcms: getPages() - Database check event received, rerunning getPages().');
+			log.debug(logPrefix + 'getPages() - Database check event received, rerunning getPages().');
 			getPages(options, cb);
 		});
 
@@ -344,13 +335,13 @@ function savePage(data, cb) {
 		data = {};
 	}
 
-	log.verbose('larvitcms: savePage() - Running with data. "' + JSON.stringify(data) + '"');
+	log.verbose(logPrefix + 'savePage() - Running with data. "' + JSON.stringify(data) + '"');
 
 	// Make sure the database tables exists before going further!
 	if ( ! dbChecked) {
-		log.debug('larvitcms: savePage() - Database not checked, rerunning this method when event have been emitted.');
+		log.debug(logPrefix + 'savePage() - Database not checked, rerunning this method when event have been emitted.');
 		eventEmitter.on('checked', function() {
-			log.debug('larvitcms: savePage() - Database check event received, rerunning savePage().');
+			log.debug(logPrefix + 'savePage() - Database check event received, rerunning savePage().');
 			exports.savePage(data, cb);
 		});
 
@@ -362,7 +353,7 @@ function savePage(data, cb) {
 		if ( ! data.name) {
 			// Add a task to break the async flow
 			tasks.push(function(cb) {
-				var err = new Error('larvitcms: savePage() - data.name is missing!');
+				var err = new Error(logPrefix + 'savePage() - data.name is missing!');
 				log.warn(err.message);
 				cb(err);
 			});
@@ -390,7 +381,7 @@ function savePage(data, cb) {
 					return;
 				}
 
-				log.debug('larvitcms: savePage() - New page created with id: "' + result.insertId + '"');
+				log.debug(logPrefix + 'savePage() - New page created with id: "' + result.insertId + '"');
 				data.id = result.insertId;
 				cb();
 			});

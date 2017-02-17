@@ -1,22 +1,20 @@
 'use strict';
 
-var cms = require('larvitcms');
+const	cms	= require('larvitcms');
 
-exports.run = function(req, res, callback) {
-	var data = {'global': res.globalData};
+exports.run = function(req, res, cb) {
+	const	data	= {'global': res.globalData};
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
-	if ( ! res.adminRights) {
-		callback(new Error('Invalid rights'), req, res, {});
-		return;
-	}
+	if ( ! res.adminRights) return cb(new Error('Invalid rights'), req, res, {});
 
-	if (res.langs)
+	if (res.langs) {
 		data.global.langs = res.langs;
+	}
 
 	cms.getSnippets({'onlySlugs': true}, function(err, snippets) {
 		data.cmsSnippets = snippets;
-		callback(null, req, res, data);
+		cb(null, req, res, data);
 	});
 };

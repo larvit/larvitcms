@@ -9,7 +9,7 @@
   },
   "private": false,
   "dependencies": {
-    "async": "^1.5.2",
+    "async": "^2.1.4",
     "larvitdb": "^1.1.2",
     "larvitslugify": "^0.10.10",
     "lodash": "^4.13.1",
@@ -17,13 +17,9 @@
     "winston": "^2.2.0"
   },
   "devDependencies": {
-    "mocha": "^2.5.3",
-    "pre-git": "^3.8.4"
+    "mocha": "^3.2.0",
+    "mocha-eslint": "^3.0.1"
   },
-  "pre-commit": [
-    "npm test",
-    "eslint ./"
-  ],
   "keywords": [
     "blog"
   ],
@@ -46,14 +42,5 @@
       "name": "lilleman",
       "email": "lilleman@larvit.se"
     }
-  ],
-  "config": {
-    "pre-git": {
-      "commit-msg": [],
-      "pre-commit": [],
-      "pre-push": [],
-      "post-commit": [],
-      "post-merge": []
-    }
-  }
+  ]
 }
