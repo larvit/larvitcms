@@ -20,7 +20,10 @@
   "devDependencies": {
     "larvitruncmd": "github:larvit/larvitruncmd",
     "mocha": "^3.2.0",
-    "mocha-eslint": "^3.0.1"
+    "mocha-eslint": "^3.0.1",
+    "request": "^2.79.0",
+    "validator": "^6.2.1",
+    "wait-for-port": "0.0.2"
   },
   "keywords": [
     "blog"

@@ -9,6 +9,7 @@
   "author": "lillem4n <lilleman@larvit.se>",
   "license": "ISC",
   "dependencies": {
-    "larvitcms": "github:larvit/larvitcms"
+    "larvitcms": "github:larvit/larvitcms",
+    "larvitutils": "^1.1.1"
   }
 }

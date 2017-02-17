@@ -1,11 +1,18 @@
 'use strict';
 
-const	userLib	= require('larvituser'),
+const	Intercom	= require('larvitamintercom'),
+	userLib	= require('larvituser'),
+	lUtils	= require('larvitutils'),
 	dbConf	= {'socketPath': '/run/mysqld/mysqld.sock', 'user': 'root', 'pass': '', 'database': 'larvit'},
 	db	= require('larvitdb');
 
+if ( ! process.env.amqpConf) {
+	throw new Error('amqpConf environment variable is not set');
+}
+
 // Set userLib to standalone mode (or use "slave" if another master-instance is running)
-userLib.dataWriter.mode = 'master';
+userLib.dataWriter.mode	= 'master';
+lUtils.instances.intercom	= new Intercom(process.env.amqpConf);
 
 // Connect to the database
 db.setup(dbConf);
