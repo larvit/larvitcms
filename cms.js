@@ -1,6 +1,7 @@
 'use strict';
 
-const	eventEmitter	= new require('events').EventEmitter(),
+const	events	= require('events'),
+	eventEmitter	= new events.EventEmitter(),
 	logPrefix	= 'larvitcms: ./cms.js - ',
 	slugify	= require('larvitslugify'),
 	async	= require('async'),

@@ -22,6 +22,8 @@ function call404(req, res, cb) {
 exports.run = function(req, res, cb) {
 	const	data	= {'global': res.globalData};
 
+	data.global.menuControllerName = 'adminCmsPages';
+
 	if (req.lang === undefined) {
 		if (res.langs !== undefined && res.langs[0] !== undefined) {
 			req.lang = res.langs[0];

@@ -9,6 +9,8 @@ exports.run = function(req, res, cb) {
 		data	= {'global': res.globalData},
 		slug	= res.globalData.urlParsed.query.slug;
 
+	data.global.menuControllerName = 'adminCmsPages';
+
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
 	if ( ! res.adminRights) return cb(new Error('Invalid rights'), req, res, {});
