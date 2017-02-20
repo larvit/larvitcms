@@ -29,53 +29,21 @@
 
 	<% if ( ! global.urlParsed.query.langs) global.urlParsed.query.langs = 'en'; %>
 
-<style>
-	.tabs {
-		width:	100%;
-		border-bottom:	solid 1px #d1d1d1;
-		font-size:	0;
-		background:	#fcfcfc;
-
-	}
-
-		.tabs > .tab {
-			border:	solid 1px #d1d1d1;
-			overflow:	hidden;
-			display:	inline-block;
-			text-align:	center;
-			padding:	0.5rem 2rem;
-			font-size:	1.3rem;
-			margin:	0;
-			margin-bottom:	-1px;
-			border-top-right-radius:	1rem;
-			border-top-left-radius:	1rem;
-			background:	#edefef;
-			cursor:	pointer;
-			cursor:	hand;
-		}
-
-			.tabs > .tab:focus {
-				border-bottom:	1px solid #fff;
-				outline:	none;
-				background:	#fff;
-			}
-
-	.tab_content {
-		display:	none;
-	}
-
-</style>
-
 	<% /* Due to display: inline-block we need it to be no spaces between the elements... */
-		print('<div class="tabs">');
+		let i = 0;
+		print('<nav class="tabs">');
 		_.each(global.urlParsed.query.langs.split(','), function(lang) {
-			print('<a href="#' + lang + '" class="tab">' + lang + '</a>');
+			print('<a showcontent="tab_content_' + i + '" class="tab');
+			if (i === 0) print(' active');
+			print('">' + lang + '</a>');
+			i ++;
 		});
-		print('</div>');
+		print('</nav>');
 	%>
 
+	<% i = 0; %>
 	<% _.each(global.urlParsed.query.langs.split(','), function(lang) { %>
-	<fieldset class="tab_content" name="<%= lang %>">
+	<fieldset class="tab_content" id="tab_content_<%= i %>">
 		<legend>Entry content, language: <%= lang %></legend>
 
 		<div class="row">
