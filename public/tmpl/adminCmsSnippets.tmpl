@@ -7,7 +7,7 @@
 		</tr>
 	</thead>
 	<tbody>
-	<% _.each(cmsSnippets, function(snippet) { %>
+	<% _.each(cmsSnippets, function (snippet) { %>
 		<tr>
 			<td><a href="adminCmsSnippetEdit?langs=<% if(global.langs){print(global.langs.join(','));}else{print('en');} %>&slug=<%= snippet.slug %>"><%= snippet.slug %></a></td>
 		</tr>

@@ -9,7 +9,7 @@
 		</tr>
 	</thead>
 	<tbody>
-	<% _.each(cmsPages, function(page) { %>
+	<% _.each(cmsPages, function (page) { %>
 		<tr>
 			<td><a href="adminCmsPageEdit?langs=<% if(global.langs){print(global.langs.join(','));}else{print('en');} %>&id=<%= page.id %>"><%= page.id %></a></td>
 			<td><%= page.name %></td>

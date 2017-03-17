@@ -24,7 +24,7 @@
 
 	<% if ( ! global.urlParsed.query.langs) global.urlParsed.query.langs = 'en'; %>
 
-	<% _.each(global.urlParsed.query.langs.split(','), function(lang) { %>
+	<% _.each(global.urlParsed.query.langs.split(','), function (lang) { %>
 		<div class="row">
 			<label for="body.<%= lang %>">Snippet content, language: <%= lang %></label>
 			<textarea class="u-full-width" name="body.<%= lang %>" rows="20"><% if (global.formFields['body.' + lang]) print(global.formFields['body.' + lang]) %></textarea>

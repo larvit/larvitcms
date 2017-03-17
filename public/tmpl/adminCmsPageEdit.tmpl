@@ -32,7 +32,7 @@
 	<% /* Due to display: inline-block we need it to be no spaces between the elements... */
 		let i = 0;
 		print('<nav class="tabs">');
-		_.each(global.urlParsed.query.langs.split(','), function(lang) {
+		_.each(global.urlParsed.query.langs.split(','), function (lang) {
 			print('<a showcontent="tab_content_' + i + '" class="tab');
 			if (i === 0) print(' active');
 			print('">' + lang + '</a>');
@@ -42,7 +42,7 @@
 	%>
 
 	<% i = 0; %>
-	<% _.each(global.urlParsed.query.langs.split(','), function(lang) { %>
+	<% _.each(global.urlParsed.query.langs.split(','), function (lang) { %>
 	<fieldset class="tab_content" id="tab_content_<%= i %>">
 		<legend>Entry content, language: <%= lang %></legend>
 

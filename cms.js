@@ -2,7 +2,8 @@
 
 const	events	= require('events'),
 	eventEmitter	= new events.EventEmitter(),
-	dbmigration	= require('larvitdbmigration')({'tableName': 'cms_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
+	DbMigration	= require('larvitdbmigration'),
+	dbmigration	=  new DbMigration({'dbType': 'larvitdb', 'dbDriver': require('larvitdb'), 'tableName': 'cms_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
 	logPrefix	= 'larvitcms: ./cms.js - ',
 	slugify	= require('larvitslugify'),
 	async	= require('async'),
@@ -26,7 +27,7 @@ let	readyInProgress	= false,
  * @param func cb - callback(err, pages)
  */
 function getPages(options, cb) {
-	ready(function(err) {
+	ready(function (err) {
 		const	thisLogPrefix	= logPrefix + 'getPages() - ',
 			tmpPages	= {},
 			dbFields	= [],
@@ -70,7 +71,7 @@ function getPages(options, cb) {
 		// Make sure the database tables exists before going further!
 		if ( ! dbChecked) {
 			log.debug(thisLogPrefix + 'Database not checked, rerunning this method when event have been emitted.');
-			eventEmitter.on('checked', function() {
+			eventEmitter.on('checked', function () {
 				log.debug(thisLogPrefix + 'Database check event received, rerunning getPages().');
 				getPages(options, cb);
 			});
@@ -135,7 +136,7 @@ function getPages(options, cb) {
 			}
 		}
 
-		db.query(sql, dbFields, function(err, rows) {
+		db.query(sql, dbFields, function (err, rows) {
 			let	pageId;
 
 			if (err) return cb(err);
@@ -173,7 +174,7 @@ function getPages(options, cb) {
  * @param func cb(err, slugs)
  */
 function getSnippets(options, cb) {
-	ready(function(err) {
+	ready(function (err) {
 		const	thisLogPrefix	= logPrefix + 'getSnippets() - ',
 			dbFields = [];
 
@@ -189,7 +190,7 @@ function getSnippets(options, cb) {
 		// Make sure the database tables exists before going further!
 		if ( ! dbChecked) {
 			log.debug(thisLogPrefix + 'Database not checked, rerunning this method when event have been emitted.');
-			eventEmitter.on('checked', function() {
+			eventEmitter.on('checked', function () {
 				log.debug(thisLogPrefix + 'Database check event received, rerunning getSnippets().');
 				getSnippets(options, cb);
 			});
@@ -227,7 +228,7 @@ function getSnippets(options, cb) {
 
 		sql += 'ORDER BY slug, lang';
 
-		db.query(sql, dbFields, function(err, rows) {
+		db.query(sql, dbFields, function (err, rows) {
 			const snippets = [];
 
 			let	snippet,
@@ -266,14 +267,14 @@ function ready(retries, cb) {
 	}
 
 	if (typeof cb !== 'function') {
-		cb = function(){};
+		cb = function (){};
 	}
 
 	if (retries === undefined) {
 		retries	= 0;
 	}
 
-	if (isReady === true) { cb(); return; }
+	if (isReady === true) return cb();
 
 	if (readyInProgress === true) {
 		eventEmitter.on('ready', cb);
@@ -282,7 +283,7 @@ function ready(retries, cb) {
 
 	readyInProgress = true;
 
-	dbmigration(function(err) {
+	dbmigration.run(function (err) {
 		if (err) {
 			log.error('larvitorder: dataWriter.js - ready() - Database error: ' + err.message);
 			return;
@@ -297,10 +298,10 @@ function ready(retries, cb) {
 ready();
 
 function rmPage(id, cb) {
-	ready(function(err) {
+	ready(function (err) {
 		if (err) return cb(err);
 
-		db.query('DELETE FROM cms_pagesData WHERE pageId = ?', [id], function(err) {
+		db.query('DELETE FROM cms_pagesData WHERE pageId = ?', [id], function (err) {
 			if (err) return cb(err);
 
 			db.query('DELETE FROM cms_pages WHERE id = ?', [id], cb);
@@ -327,7 +328,7 @@ function rmPage(id, cb) {
  * @param func cb(err, page) - the page will be a row from getPages()
  */
 function savePage(data, cb) {
-	ready(function(err) {
+	ready(function (err) {
 		const	thisLogPrefix	= logPrefix + 'savePage() - ',
 			tasks	= [];
 
@@ -345,7 +346,7 @@ function savePage(data, cb) {
 		// Make sure the database tables exists before going further!
 		if ( ! dbChecked) {
 			log.debug(thisLogPrefix + 'Database not checked, rerunning this method when event have been emitted.');
-			eventEmitter.on('checked', function() {
+			eventEmitter.on('checked', function () {
 				log.debug(thisLogPrefix + 'Database check event received, rerunning savePage().');
 				exports.savePage(data, cb);
 			});
@@ -357,14 +358,14 @@ function savePage(data, cb) {
 		if (data.id === undefined) {
 			if ( ! data.name) {
 				// Add a task to break the async flow
-				tasks.push(function(cb) {
+				tasks.push(function (cb) {
 					const	err	= new Error('data.name is missing!');
 					log.warn(thisLogPrefix + err.message);
 					cb(err);
 				});
 			}
 
-			tasks.push(function(cb) {
+			tasks.push(function (cb) {
 				const	dbFields	= [data.name];
 
 				let	sql	= 'INSERT INTO cms_pages (name';
@@ -382,7 +383,7 @@ function savePage(data, cb) {
 
 				sql += ');';
 
-				db.query(sql, dbFields, function(err, result) {
+				db.query(sql, dbFields, function (err, result) {
 					if (err) return cb(err);
 
 					log.debug(thisLogPrefix + 'New page created with id: "' + result.insertId + '"');
@@ -392,13 +393,13 @@ function savePage(data, cb) {
 			});
 		} else {
 			// Erase previous data
-			tasks.push(function(cb) {
+			tasks.push(function (cb) {
 				db.query('DELETE FROM cms_pagesData WHERE pageId = ?', [parseInt(data.id)], cb);
 			});
 
 			// Set published
 			if (data.published !== undefined) {
-				tasks.push(function(cb) {
+				tasks.push(function (cb) {
 					const	dbFields	= [data.published, data.id],
 						sql	= 'UPDATE cms_pages SET published = ? WHERE id = ?';
 
@@ -408,7 +409,7 @@ function savePage(data, cb) {
 
 			// Set name
 			if (data.name !== undefined) {
-				tasks.push(function(cb) {
+				tasks.push(function (cb) {
 					const	dbFields	= [data.name, data.id],
 						sql	= 'UPDATE cms_pages SET name = ? WHERE id = ?';
 
@@ -419,7 +420,7 @@ function savePage(data, cb) {
 
 		// We need to declare this outside the loop because of async operations
 		function addEntryData(lang, htmlTitle, body, slug) {
-			tasks.push(function(cb) {
+			tasks.push(function (cb) {
 				const	dbFields	= [data.id, lang, htmlTitle, body, slug],
 					sql	= 'INSERT INTO cms_pagesData (pageId, lang, htmlTitle, body, slug) VALUES(?,?,?,?,?);';
 
@@ -444,11 +445,11 @@ function savePage(data, cb) {
 			}
 		}
 
-		async.series(tasks, function(err) {
+		async.series(tasks, function (err) {
 			if (err) return cb(err);
 
 			// Re-read this entry from the database to be sure to get the right deal!
-			getPages({'ids': data.id}, function(err, pages) {
+			getPages({'ids': data.id}, function (err, pages) {
 				if (err) return cb(err);
 
 				cb(null, pages[0]);
@@ -458,7 +459,7 @@ function savePage(data, cb) {
 };
 
 function saveSnippet(options, cb) {
-	ready(function(err) {
+	ready(function (err) {
 		const	dbFields	= [options.body, options.slug, options.lang],
 			sql	= 'REPLACE INTO cms_snippets (body, slug, lang) VALUES(?,?,?);';
 

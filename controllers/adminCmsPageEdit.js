@@ -4,7 +4,7 @@ const	async	= require('async'),
 	cms	= require('larvitcms'),
 	_	= require('lodash');
 
-exports.run = function(req, res, cb) {
+exports.run = function (req, res, cb) {
 	const	pageId	= res.globalData.urlParsed.query.id,
 		data	= {'global': res.globalData},
 		tasks	= [];
@@ -18,18 +18,17 @@ exports.run = function(req, res, cb) {
 	// Save a POSTed form
 	if (res.globalData.formFields.save !== undefined) {
 		// Basic form validation
-		tasks.push(function(cb) {
+		tasks.push(function (cb) {
 			if ( ! res.globalData.formFields.name) {
 				res.globalData.errors = ['Page name is required'];
-				cb(new Error('Invalid fields'));
-				return;
+				return cb(new Error('Invalid fields'));
 			}
 
 			cb();
 		});
 
 		// Save the data
-		tasks.push(function(cb) {
+		tasks.push(function (cb) {
 			const	saveObj = {'name': res.globalData.formFields.name, 'langs': {}};
 
 			let	fieldName,
@@ -66,7 +65,7 @@ exports.run = function(req, res, cb) {
 				}
 			}
 
-			cms.savePage(saveObj, function(err, entry) {
+			cms.savePage(saveObj, function (err, entry) {
 				if (err) return cb(err);
 
 				// Redirect to a new URL if a new pageId was created
@@ -86,8 +85,8 @@ exports.run = function(req, res, cb) {
 
 	// Delete a page
 	if (res.globalData.formFields.delete !== undefined && pageId !== undefined) {
-		tasks.push(function(cb) {
-			cms.rmPage(pageId, function(err) {
+		tasks.push(function (cb) {
+			cms.rmPage(pageId, function (err) {
 				if (err) return cb(err);
 
 				req.session.data.nextCallData	= {'global': {'messages': ['Page with ID ' + pageId + ' deleted']}};
@@ -100,8 +99,8 @@ exports.run = function(req, res, cb) {
 
 	// Load data from database
 	else if (pageId !== undefined) {
-		tasks.push(function(cb) {
-			cms.getPages({'ids': pageId}, function(err, rows) {
+		tasks.push(function (cb) {
+			cms.getPages({'ids': pageId}, function (err, rows) {
 				let	lang;
 
 				if (rows[0] !== undefined) {
@@ -116,8 +115,7 @@ exports.run = function(req, res, cb) {
 						res.globalData.formFields['body.'	+ lang] = rows[0].langs[lang].body;
 					}
 				} else {
-					cb(new Error('larvitcms: controllers/adminCmsPageEdit.js - Wrong pageId supplied'));
-					return;
+					return cb(new Error('larvitcms: controllers/adminCmsPageEdit.js - Wrong pageId supplied'));
 				}
 
 				cb();
@@ -125,7 +123,7 @@ exports.run = function(req, res, cb) {
 		});
 	}
 
-	async.series(tasks, function() {
+	async.series(tasks, function () {
 		cb(null, req, res, data);
 	});
 };

@@ -19,7 +19,7 @@ function call404(req, res, cb) {
 	}
 }
 
-exports.run = function(req, res, cb) {
+exports.run = function (req, res, cb) {
 	const	data	= {'global': res.globalData};
 
 	data.global.menuControllerName = 'adminCmsPages';
@@ -40,7 +40,7 @@ exports.run = function(req, res, cb) {
 		req.urlParsed.path = req.urlParsed.path.substring(0, req.urlParsed.path.length - 5);
 	}
 
-	cms.getPages({'slugs': req.urlParsed.path}, function(err, pages) {
+	cms.getPages({'slugs': req.urlParsed.path}, function (err, pages) {
 		if (err) return cb(err, req, res, data);
 
 		if (pages.length === 0) {

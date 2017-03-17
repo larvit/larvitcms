@@ -2,7 +2,7 @@
 
 const	cms	= require('larvitcms');
 
-exports.run = function(req, res, cb) {
+exports.run = function (req, res, cb) {
 	const	data	= {'global': res.globalData};
 
 	data.global.menuControllerName = 'adminCmsPages';
@@ -15,7 +15,7 @@ exports.run = function(req, res, cb) {
 		data.global.langs = res.langs;
 	}
 
-	cms.getPages({'limit': false}, function(err, rows) {
+	cms.getPages({'limit': false}, function (err, rows) {
 		data.cmsPages	= rows;
 		cb(null, req, res, data);
 	});
