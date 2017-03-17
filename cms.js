@@ -4,7 +4,7 @@ const	events	= require('events'),
 	eventEmitter	= new events.EventEmitter(),
 	DbMigration	= require('larvitdbmigration'),
 	dbmigration	=  new DbMigration({'dbType': 'larvitdb', 'dbDriver': require('larvitdb'), 'tableName': 'cms_db_version', 'migrationScriptsPath': __dirname + '/dbmigration'}),
-	logPrefix	= 'larvitcms: ./cms.js - ',
+	topLogPrefix	= 'larvitcms: ./cms.js - ',
 	slugify	= require('larvitslugify'),
 	async	= require('async'),
 	log	= require('winston'),
@@ -27,9 +27,10 @@ let	readyInProgress	= false,
  * @param func cb - callback(err, pages)
  */
 function getPages(options, cb) {
+	const	logPrefix	= topLogPrefix + 'getPages() - ';
+
 	ready(function (err) {
-		const	thisLogPrefix	= logPrefix + 'getPages() - ',
-			tmpPages	= {},
+		const	tmpPages	= {},
 			dbFields	= [],
 			pages	= [];
 
@@ -42,7 +43,7 @@ function getPages(options, cb) {
 			options	= {};
 		}
 
-		log.debug(thisLogPrefix + 'Called with options: "' + JSON.stringify(options) + '"');
+		log.debug(logPrefix + 'Called with options: "' + JSON.stringify(options) + '"');
 
 		// Make sure options that should be arrays actually are arrays
 		// This will simplify our lives in the SQL builder below
@@ -139,6 +140,7 @@ function getPages(options, cb) {
 							'id':	rows[i].id,
 							'name':	rows[i].name,
 							'published':	Boolean(rows[i].published),
+							'template':	rows[i].template,
 							'langs':	{}
 						};
 					}
@@ -172,8 +174,7 @@ function getPages(options, cb) {
  */
 function getSnippets(options, cb) {
 	ready(function (err) {
-		const	thisLogPrefix	= logPrefix + 'getSnippets() - ',
-			dbFields = [];
+		const	dbFields	= [];
 
 		let	sql;
 
@@ -251,6 +252,8 @@ function getSnippets(options, cb) {
 }
 
 function ready(retries, cb) {
+	const	logPrefix	= topLogPrefix + 'ready() - ';
+
 	if (typeof retries === 'function') {
 		cb	= retries;
 		retries	= 0;
@@ -275,7 +278,7 @@ function ready(retries, cb) {
 
 	dbmigration.run(function (err) {
 		if (err) {
-			log.error('larvitorder: dataWriter.js - ready() - Database error: ' + err.message);
+			log.error(logPrefix + 'Database error: ' + err.message);
 			return;
 		}
 
@@ -306,6 +309,7 @@ function rmPage(id, cb) {
  *			'id':	1323,
  *			'name':	'barfoo'
  *			'published':	dateObj,
+ *			'template':	str, // Defaults to "default"
  *			'langs': {
  *				'en': {
  *					'htmlTitle':	'foo',
@@ -318,9 +322,10 @@ function rmPage(id, cb) {
  * @param func cb(err, page) - the page will be a row from getPages()
  */
 function savePage(data, cb) {
+	const	logPrefix	= topLogPrefix + 'savePage() - ';
+
 	ready(function (err) {
-		const	thisLogPrefix	= logPrefix + 'savePage() - ',
-			tasks	= [];
+		const	tasks	= [];
 
 		let	lang;
 
@@ -331,7 +336,7 @@ function savePage(data, cb) {
 			data	= {};
 		}
 
-		log.verbose(thisLogPrefix + 'Running with data. "' + JSON.stringify(data) + '"');
+		log.verbose(logPrefix + 'Running with data. "' + JSON.stringify(data) + '"');
 
 		tasks.push(ready);
 
@@ -341,7 +346,7 @@ function savePage(data, cb) {
 				// Add a task to break the async flow
 				tasks.push(function (cb) {
 					const	err	= new Error('data.name is missing!');
-					log.warn(thisLogPrefix + err.message);
+					log.warn(logPrefix + err.message);
 					cb(err);
 				});
 			}
@@ -355,6 +360,10 @@ function savePage(data, cb) {
 					sql += ', published';
 				}
 
+				if (data.template) {
+					sql += ', template';
+				}
+
 				sql += ') VALUES(?';
 
 				if (data.published) {
@@ -362,12 +371,17 @@ function savePage(data, cb) {
 					dbFields.push(data.published);
 				}
 
+				if (data.template) {
+					sql += ',?';
+					dbFields.push(data.template);
+				}
+
 				sql += ');';
 
 				db.query(sql, dbFields, function (err, result) {
 					if (err) return cb(err);
 
-					log.debug(thisLogPrefix + 'New page created with id: "' + result.insertId + '"');
+					log.debug(logPrefix + 'New page created with id: "' + result.insertId + '"');
 					data.id = result.insertId;
 					cb();
 				});
@@ -393,6 +407,16 @@ function savePage(data, cb) {
 				tasks.push(function (cb) {
 					const	dbFields	= [data.name, data.id],
 						sql	= 'UPDATE cms_pages SET name = ? WHERE id = ?';
+
+					db.query(sql, dbFields, cb);
+				});
+			}
+
+			// Set template
+			if (data.template !== undefined) {
+				tasks.push(function (cb) {
+					const	dbFields	= [data.template, data.id],
+						sql	= 'UPDATE cms_pages SET template = ? WHERE id = ?';
 
 					db.query(sql, dbFields, cb);
 				});

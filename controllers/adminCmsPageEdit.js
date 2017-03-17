@@ -1,6 +1,7 @@
 'use strict';
 
 const	async	= require('async'),
+	lfs	= require('larvitfs'),
 	cms	= require('larvitcms'),
 	_	= require('lodash');
 
@@ -9,7 +10,8 @@ exports.run = function (req, res, cb) {
 		data	= {'global': res.globalData},
 		tasks	= [];
 
-	data.global.menuControllerName = 'adminCmsPages';
+	data.global.menuControllerName	= 'adminCmsPages';
+	data.cmsTemplates	= require(lfs.getPathSync('config/cmsTemplates.json'));
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
@@ -29,7 +31,7 @@ exports.run = function (req, res, cb) {
 
 		// Save the data
 		tasks.push(function (cb) {
-			const	saveObj = {'name': res.globalData.formFields.name, 'langs': {}};
+			const	saveObj = {'name': res.globalData.formFields.name, 'template': res.globalData.formFields.template, 'langs': {}};
 
 			let	fieldName,
 				field,
@@ -107,6 +109,7 @@ exports.run = function (req, res, cb) {
 					res.globalData.formFields = {
 						'name':	rows[0].name,
 						'published':	rows[0].published,
+						'template':	rows[0].template
 					};
 
 					for (lang in rows[0].langs) {

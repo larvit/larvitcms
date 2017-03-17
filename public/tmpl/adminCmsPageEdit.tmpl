@@ -19,6 +19,15 @@
 			</div>
 
 			<div class="three columns">
+				<label for="template">Template</label>
+				<select name="template">
+					<% for (var templateName in obj.cmsTemplates) { %>
+						<option value="<%= templateName %>"<% if (templateName === obj.global.formFields.template) { print(' selected="selected"'); } %>><%= obj.cmsTemplates[templateName].label %></option>
+					<% } %>
+				</select>
+			</div>
+
+			<div class="three columns">
 				<label for="published">
 					<input type="checkbox" name="published" <% if (global.formFields.published) print(' checked="checked"'); %> />
 					<span class="label-body">Published</span>
@@ -58,7 +67,14 @@
 			</div>
 		</div>
 
-		<% for (let i = 1; i !== 6; i ++) { %>
+		<%
+			var fields = 1;
+			if (obj.global.formFields.template && obj.cmsTemplates[obj.global.formFields.template].fields) {
+				fields	= obj.cmsTemplates[obj.global.formFields.template].fields;
+			}
+		%>
+
+		<% for (let i = 1; i !== (fields + 1); i ++) { %>
 			<div class="row">
 				<label for="body<%= i %>.<%= lang %>">Entry <%= i %> content</label>
 				<textarea class="u-full-width" name="body<%= i %>.<%= lang %>" rows="20"><% if (global.formFields['body' + i + '.' + lang]) print(global.formFields['body' + i + '.' + lang]) %></textarea>

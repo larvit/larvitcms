@@ -53,6 +53,7 @@ exports.run = function (req, res, cb) {
 		// Take the first page that is found... if there are several, well, tough luck :D
 		if (pages[0] !== undefined && pages[0].langs !== undefined && pages[0].langs[req.lang] !== undefined) {
 			data.cmsData	= pages[0].langs[req.lang];
+			data.cmsData.template	= pages[0].template;
 			data.global.title	+= ' | ' + data.cmsData.htmlTitle;
 			data.global.slugs	= {};
 			for (const key in pages[0].langs) {

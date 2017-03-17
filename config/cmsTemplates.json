@@ -1,0 +1,10 @@
+{
+	"default": {
+		"label":	"Default",
+		"fields":	1
+	},
+	"custom": {
+		"label":	"Multiple fields",
+		"fields":	5
+	}
+}
