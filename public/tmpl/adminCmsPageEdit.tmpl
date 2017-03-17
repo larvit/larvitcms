@@ -58,10 +58,12 @@
 			</div>
 		</div>
 
-		<div class="row">
-			<label for="body.<%= lang %>">Entry content</label>
-			<textarea class="u-full-width" name="body.<%= lang %>" rows="20"><% if (global.formFields['body.' + lang]) print(global.formFields['body.' + lang]) %></textarea>
-		</div>
+		<% for (let i = 1; i !== 6; i ++) { %>
+			<div class="row">
+				<label for="body<%= i %>.<%= lang %>">Entry <%= i %> content</label>
+				<textarea class="u-full-width" name="body<%= i %>.<%= lang %>" rows="20"><% if (global.formFields['body' + i + '.' + lang]) print(global.formFields['body' + i + '.' + lang]) %></textarea>
+			</div>
+		<% } %>
 	</fieldset>
 		<% i ++; %>
 	<% }); %>

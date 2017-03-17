@@ -68,17 +68,6 @@ function getPages(options, cb) {
 			options.limit = 10;
 		}
 
-		// Make sure the database tables exists before going further!
-		if ( ! dbChecked) {
-			log.debug(thisLogPrefix + 'Database not checked, rerunning this method when event have been emitted.');
-			eventEmitter.on('checked', function () {
-				log.debug(thisLogPrefix + 'Database check event received, rerunning getPages().');
-				getPages(options, cb);
-			});
-
-			return;
-		}
-
 		sql  = 'SELECT pgd.*, p.*\n';
 		sql += 'FROM cms_pages p\n';
 		sql += '	LEFT JOIN cms_pagesData pgd ON pgd.pageId = p.id\n';
@@ -136,33 +125,41 @@ function getPages(options, cb) {
 			}
 		}
 
-		db.query(sql, dbFields, function (err, rows) {
-			let	pageId;
-
+		ready(function (err) {
 			if (err) return cb(err);
 
-			for (let i = 0; rows[i] !== undefined; i ++) {
-				if (tmpPages[rows[i].id] === undefined) {
-					tmpPages[rows[i].id] = {
-						'id':	rows[i].id,
-						'name':	rows[i].name,
-						'published':	Boolean(rows[i].published),
-						'langs':	{}
+			db.query(sql, dbFields, function (err, rows) {
+				let	pageId;
+
+				if (err) return cb(err);
+
+				for (let i = 0; rows[i] !== undefined; i ++) {
+					if (tmpPages[rows[i].id] === undefined) {
+						tmpPages[rows[i].id] = {
+							'id':	rows[i].id,
+							'name':	rows[i].name,
+							'published':	Boolean(rows[i].published),
+							'langs':	{}
+						};
+					}
+
+					tmpPages[rows[i].id].langs[rows[i].lang] = {
+						'htmlTitle':	rows[i].htmlTitle,
+						'body1':	rows[i].body1,
+						'body2':	rows[i].body2,
+						'body3':	rows[i].body3,
+						'body4':	rows[i].body4,
+						'body5':	rows[i].body5,
+						'slug':	rows[i].slug
 					};
 				}
 
-				tmpPages[rows[i].id].langs[rows[i].lang] = {
-					'htmlTitle':	rows[i].htmlTitle,
-					'body':	rows[i].body,
-					'slug':	rows[i].slug
-				};
-			}
+				for (pageId in tmpPages) {
+					pages.push(tmpPages[pageId]);
+				}
 
-			for (pageId in tmpPages) {
-				pages.push(tmpPages[pageId]);
-			}
-
-			cb(null, pages);
+				cb(null, pages);
+			});
 		});
 	});
 };
@@ -185,17 +182,6 @@ function getSnippets(options, cb) {
 		if (typeof options === 'function') {
 			cb	= options;
 			options	= {};
-		}
-
-		// Make sure the database tables exists before going further!
-		if ( ! dbChecked) {
-			log.debug(thisLogPrefix + 'Database not checked, rerunning this method when event have been emitted.');
-			eventEmitter.on('checked', function () {
-				log.debug(thisLogPrefix + 'Database check event received, rerunning getSnippets().');
-				getSnippets(options, cb);
-			});
-
-			return;
 		}
 
 		if (options.onlySlugs) {
@@ -228,34 +214,38 @@ function getSnippets(options, cb) {
 
 		sql += 'ORDER BY slug, lang';
 
-		db.query(sql, dbFields, function (err, rows) {
-			const snippets = [];
-
-			let	snippet,
-				prevSlug;
-
+		ready(function (err) {
 			if (err) return cb(err);
 
-			for (let i = 0; rows[i] !== undefined; i ++) {
-				if (prevSlug !== rows[i].slug) {
-					if (snippet) {
-						snippets.push(snippet);
+			db.query(sql, dbFields, function (err, rows) {
+				const snippets = [];
+
+				let	snippet,
+					prevSlug;
+
+				if (err) return cb(err);
+
+				for (let i = 0; rows[i] !== undefined; i ++) {
+					if (prevSlug !== rows[i].slug) {
+						if (snippet) {
+							snippets.push(snippet);
+						}
+
+						snippet = {'slug': rows[i].slug, 'langs': {}};
 					}
 
-					snippet = {'slug': rows[i].slug, 'langs': {}};
+					prevSlug = rows[i].slug;
+
+					snippet.langs[rows[i].lang] = rows[i].body;
 				}
 
-				prevSlug = rows[i].slug;
+				// Add the last one
+				if (snippet) {
+					snippets.push(snippet);
+				}
 
-				snippet.langs[rows[i].lang] = rows[i].body;
-			}
-
-			// Add the last one
-			if (snippet) {
-				snippets.push(snippet);
-			}
-
-			cb(null, snippets);
+				cb(null, snippets);
+			});
 		});
 	});
 }
@@ -343,16 +333,7 @@ function savePage(data, cb) {
 
 		log.verbose(thisLogPrefix + 'Running with data. "' + JSON.stringify(data) + '"');
 
-		// Make sure the database tables exists before going further!
-		if ( ! dbChecked) {
-			log.debug(thisLogPrefix + 'Database not checked, rerunning this method when event have been emitted.');
-			eventEmitter.on('checked', function () {
-				log.debug(thisLogPrefix + 'Database check event received, rerunning savePage().');
-				exports.savePage(data, cb);
-			});
-
-			return;
-		}
+		tasks.push(ready);
 
 		// Create a new page if id is not set
 		if (data.id === undefined) {
@@ -419,10 +400,10 @@ function savePage(data, cb) {
 		}
 
 		// We need to declare this outside the loop because of async operations
-		function addEntryData(lang, htmlTitle, body, slug) {
+		function addEntryData(lang, htmlTitle, body1, body2, body3, body4, body5, slug) {
 			tasks.push(function (cb) {
-				const	dbFields	= [data.id, lang, htmlTitle, body, slug],
-					sql	= 'INSERT INTO cms_pagesData (pageId, lang, htmlTitle, body, slug) VALUES(?,?,?,?,?);';
+				const	dbFields	= [data.id, lang, htmlTitle, body1, body2, body3, body4, body5, slug],
+					sql	= 'INSERT INTO cms_pagesData (pageId, lang, htmlTitle, body1, body2, body3, body4, body5, slug) VALUES(?,?,?,?,?,?,?,?,?);';
 
 				db.query(sql, dbFields, cb);
 			});
@@ -439,9 +420,14 @@ function savePage(data, cb) {
 					data.langs[lang].slug = slugify(data.langs[lang].htmlTitle);
 				}
 
-				if (data.langs[lang].htmlTitle && data.langs[lang].body) {
-					addEntryData(lang, data.langs[lang].htmlTitle, data.langs[lang].body, data.langs[lang].slug);
-				}
+				if ( ! data.langs[lang].htmlTitle)	data.langs[lang].htmlTitle	= '';
+				if ( ! data.langs[lang].body1)	data.langs[lang].body1	= '';
+				if ( ! data.langs[lang].body2)	data.langs[lang].body2	= '';
+				if ( ! data.langs[lang].body3)	data.langs[lang].body3	= '';
+				if ( ! data.langs[lang].body4)	data.langs[lang].body4	= '';
+				if ( ! data.langs[lang].body5)	data.langs[lang].body5	= '';
+
+				addEntryData(lang, data.langs[lang].htmlTitle, data.langs[lang].body1, data.langs[lang].body2, data.langs[lang].body3, data.langs[lang].body4, data.langs[lang].body5, data.langs[lang].slug);
 			}
 		}
 

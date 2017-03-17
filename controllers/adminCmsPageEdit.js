@@ -112,7 +112,11 @@ exports.run = function (req, res, cb) {
 					for (lang in rows[0].langs) {
 						res.globalData.formFields['htmlTitle.'	+ lang] = rows[0].langs[lang].htmlTitle;
 						res.globalData.formFields['slug.'	+ lang] = rows[0].langs[lang].slug;
-						res.globalData.formFields['body.'	+ lang] = rows[0].langs[lang].body;
+						res.globalData.formFields['body1.'	+ lang] = rows[0].langs[lang].body1;
+						res.globalData.formFields['body2.'	+ lang] = rows[0].langs[lang].body2;
+						res.globalData.formFields['body3.'	+ lang] = rows[0].langs[lang].body3;
+						res.globalData.formFields['body4.'	+ lang] = rows[0].langs[lang].body4;
+						res.globalData.formFields['body5.'	+ lang] = rows[0].langs[lang].body5;
 					}
 				} else {
 					return cb(new Error('larvitcms: controllers/adminCmsPageEdit.js - Wrong pageId supplied'));
