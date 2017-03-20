@@ -10,6 +10,8 @@ exports.run = function (req, res, cb) {
 		data	= {'global': res.globalData},
 		tasks	= [];
 
+	let	pageId	= res.globalData.urlParsed.query.id;
+
 	data.global.menuControllerName	= 'adminCmsPages';
 	data.cmsTemplates	= require(lfs.getPathSync('config/cmsTemplates.json'));
 
