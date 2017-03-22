@@ -6,8 +6,7 @@ const	async	= require('async'),
 	_	= require('lodash');
 
 exports.run = function (req, res, cb) {
-	const	pageId	= res.globalData.urlParsed.query.id,
-		data	= {'global': res.globalData},
+	const	data	= {'global': res.globalData},
 		tasks	= [];
 
 	let	pageId	= res.globalData.urlParsed.query.id;
