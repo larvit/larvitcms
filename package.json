@@ -10,7 +10,6 @@
   "private": false,
   "dependencies": {
     "async": "^2.1.5",
-    "larvitadmingui": "^0.4.5",
     "larvitdbmigration": "^2.0.0",
     "larvitfs": "^1.0.1",
     "lodash": "^4.17.4",
