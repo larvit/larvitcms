@@ -19,6 +19,15 @@
 			</div>
 
 			<div class="three columns">
+				<label for="template">Template</label>
+				<select name="template">
+					<% for (var templateName in obj.cmsTemplates) { %>
+						<option value="<%= templateName %>"<% if (templateName === obj.global.formFields.template) { print(' selected="selected"'); } %>><%= obj.cmsTemplates[templateName].label %></option>
+					<% } %>
+				</select>
+			</div>
+
+			<div class="three columns">
 				<label for="published">
 					<input type="checkbox" name="published" <% if (global.formFields.published) print(' checked="checked"'); %> />
 					<span class="label-body">Published</span>
@@ -29,8 +38,21 @@
 
 	<% if ( ! global.urlParsed.query.langs) global.urlParsed.query.langs = 'en'; %>
 
-	<% _.each(global.urlParsed.query.langs.split(','), function(lang) { %>
-	<fieldset>
+	<% /* Due to display: inline-block we need it to be no spaces between the elements... */
+		let i = 0;
+		print('<nav class="tabs">');
+		_.each(global.urlParsed.query.langs.split(','), function (lang) {
+			print('<a showcontent="tab_content_' + i + '" class="tab');
+			if (i === 0) print(' active');
+			print('">' + lang + '</a>');
+			i ++;
+		});
+		print('</nav>');
+	%>
+
+	<% i = 0; %>
+	<% _.each(global.urlParsed.query.langs.split(','), function (lang) { %>
+	<fieldset class="tab_content" id="tab_content_<%= i %>">
 		<legend>Entry content, language: <%= lang %></legend>
 
 		<div class="row">
@@ -45,11 +67,21 @@
 			</div>
 		</div>
 
-		<div class="row">
-			<label for="body.<%= lang %>">Entry content</label>
-			<textarea class="u-full-width" name="body.<%= lang %>" rows="20"><% if (global.formFields['body.' + lang]) print(global.formFields['body.' + lang]) %></textarea>
-		</div>
+		<%
+			var fields = 1;
+			if (obj.global.formFields.template && obj.cmsTemplates[obj.global.formFields.template].fields) {
+				fields	= obj.cmsTemplates[obj.global.formFields.template].fields;
+			}
+		%>
+
+		<% for (let i = 1; i !== (fields + 1); i ++) { %>
+			<div class="row">
+				<label for="body<%= i %>.<%= lang %>">Entry <%= i %> content</label>
+				<textarea class="u-full-width" name="body<%= i %>.<%= lang %>" rows="20"><% if (global.formFields['body' + i + '.' + lang]) print(global.formFields['body' + i + '.' + lang]) %></textarea>
+			</div>
+		<% } %>
 	</fieldset>
+		<% i ++; %>
 	<% }); %>
 
 	<%= _.render('inc/adminCmsPageEditControls', obj) %>
@@ -61,6 +93,6 @@
 	'toolbar': 'undo redo | formatselect bold italic underline strikethrough | subscript superscript | link unlink image | table | bullist numlist | removeformat code',
 	'menubar': false,
 	'plugins': 'link image code table',
-	'valid_elements': 'ul,li,ol,table,tr[colspan|rowspan],td[colspan|rowspan],th,thead,tbody,p,strong,a[href|target],em,span[style],sup,sub,h1,h2,h3,img[id|lang|longdesc|src|alt|title|width|height|rel]'
+	'valid_elements': 'ul,li,ol,table,tr[colspan|rowspan],td[colspan|rowspan],th,thead,tbody,p,strong,a[href|target],em,span[style],sup,sub,h1,h2,h3,h4,h5,h6,br,img[id|lang|longdesc|src|alt|title|width|height|rel]'
 });</script>
 <%= _.render('inc/pageBottom', obj) %>

@@ -4,10 +4,12 @@ const	async	= require('async'),
 	cms	= require('larvitcms'),
 	_	= require('lodash');
 
-exports.run = function(req, res, cb) {
+exports.run = function (req, res, cb) {
 	const	tasks	= [],
 		data	= {'global': res.globalData},
 		slug	= res.globalData.urlParsed.query.slug;
+
+	data.global.menuControllerName = 'adminCmsPages';
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
@@ -15,13 +17,13 @@ exports.run = function(req, res, cb) {
 
 	// Save a POSTed form
 	if (res.globalData.formFields.save !== undefined) {
-		tasks.push(function(cb) {
+		tasks.push(function (cb) {
 			const	tasks	= [];
 
 			let	field;
 
 			function addTask(lang, body) {
-				tasks.push(function(cb) {
+				tasks.push(function (cb) {
 					cms.saveSnippet({'slug': _.trimEnd(slug, '/'), 'lang': lang, 'body': body}, cb);
 				});
 			}
@@ -32,7 +34,7 @@ exports.run = function(req, res, cb) {
 				}
 			}
 
-			async.parallel(tasks, function(err) {
+			async.parallel(tasks, function (err) {
 				if (err) {
 					data.global.errors = ['Unknown save error'];
 					return cb(err);
@@ -46,8 +48,8 @@ exports.run = function(req, res, cb) {
 	}
 
 	// Load data from database
-	tasks.push(function(cb) {
-		cms.getSnippets({'slugs': slug}, function(err, snippets) {
+	tasks.push(function (cb) {
+		cms.getSnippets({'slugs': slug}, function (err, snippets) {
 			let	lang;
 
 			if (snippets[0] !== undefined) {
@@ -60,7 +62,7 @@ exports.run = function(req, res, cb) {
 		});
 	});
 
-	async.series(tasks, function(err) {
+	async.series(tasks, function (err) {
 		cb(err, req, res, data);
 	});
 };

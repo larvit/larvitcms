@@ -6,7 +6,7 @@
 	'toolbar': 'undo redo | formatselect bold italic underline strikethrough | bullist numlist | subscript superscript | link unlink image | removeformat code',
 	'menubar': false,
 	'plugins': 'link image code',
-	'valid_elements': 'ul,li,ol,br,p,strong,a[href|target],em,span,sup,sub,h1,h2,h3,img[id|lang|longdesc|src|alt|title|width|height|rel]'
+	'valid_elements': 'ul,li,ol,br,p,strong,a[href|target],em,span,sup,sub,h1,h2,h3,h4,h5,h6,br,img[id|lang|longdesc|src|alt|title|width|height|rel]'
 });</script>
 <form method="post">
 
@@ -24,7 +24,7 @@
 
 	<% if ( ! global.urlParsed.query.langs) global.urlParsed.query.langs = 'en'; %>
 
-	<% _.each(global.urlParsed.query.langs.split(','), function(lang) { %>
+	<% _.each(global.urlParsed.query.langs.split(','), function (lang) { %>
 		<div class="row">
 			<label for="body.<%= lang %>">Snippet content, language: <%= lang %></label>
 			<textarea class="u-full-width" name="body.<%= lang %>" rows="20"><% if (global.formFields['body.' + lang]) print(global.formFields['body.' + lang]) %></textarea>

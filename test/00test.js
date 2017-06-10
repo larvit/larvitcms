@@ -22,10 +22,10 @@ function testHttp(url, retry, cb) {
 		process.stdout.write('.');
 	}
 
-	request(url, {timeout: 1000}, function(err, response) {
+	request(url, {timeout: 1000}, function (err, response) {
 		if (err) {
 			if (retry < 60 && (err.code === 'ECONNREFUSED' || err.code === 'EHOSTUNREACH' || err.code === 'ETIMEDOUT')) {
-				setTimeout(function() {
+				setTimeout(function () {
 					testHttp(url, retry + 1, cb);
 				}, 1000);
 				return;
@@ -40,12 +40,12 @@ function testHttp(url, retry, cb) {
 	});
 }
 
-describe('Setup environment', function() {
-	it('should build the docker image', function(done) {
+describe('Setup environment', function () {
+	it('should build the docker image', function (done) {
 		this.timeout(10 * 60 * 1000); // 10 minutes
 
-		//runCmd('docker build --no-cache -t ' + dockerImgName + ' ' + __dirname + '/../testEnv', {'silent': true}, function(err, exitCode) {
-		runCmd('docker build -t ' + dockerImgName + ' ' + __dirname + '/../testEnv', {'silent': true}, function(err, exitCode) {
+		//runCmd('docker build --no-cache -t ' + dockerImgName + ' ' + __dirname + '/../testEnv', {'silent': true}, function (err, exitCode) {
+		runCmd('docker build -t ' + dockerImgName + ' ' + __dirname + '/../testEnv', {'silent': true}, function (err, exitCode) {
 			if (err) {
 				console.error('Could not build image: ' + err.message);
 				process.exit(1);
@@ -56,13 +56,13 @@ describe('Setup environment', function() {
 		});
 	});
 
-	it('should run rabbitMQ', function(done) {
+	it('should run rabbitMQ', function (done) {
 		const	cmdStr	= 'docker run -d rabbitmq';
 
 		this.timeout(5 * 60 * 1000); // 5 minutes
 
 		console.info(cmdStr);
-		exec(cmdStr, function(err, stdout) {
+		exec(cmdStr, function (err, stdout) {
 			if (err) {
 				console.error('Could not start RabbitMQ: ' + err.message);
 				process.exit(1);
@@ -71,7 +71,7 @@ describe('Setup environment', function() {
 			containers.rabbit.id	= stdout.replace(/^\s+|\s+$/g, '');
 
 			// Get the container IP
-			exec('docker inspect --format \'{{.NetworkSettings.IPAddress}}\' ' + containers.rabbit.id, function(err, stdout) {
+			exec('docker inspect --format \'{{.NetworkSettings.IPAddress}}\' ' + containers.rabbit.id, function (err, stdout) {
 				if (err) {
 					console.error('Could not get RabbitMQ IP: ' + err.message);
 					process.exit(1);
@@ -84,7 +84,7 @@ describe('Setup environment', function() {
 					process.exit(1);
 				}
 
-				waitForPort(containers.rabbit.ip, 5672, function(err) {
+				waitForPort(containers.rabbit.ip, 5672, function (err) {
 					if (err) throw err;
 
 					done();
@@ -93,10 +93,10 @@ describe('Setup environment', function() {
 		});
 	});
 
-	it('should run the app container', function(done) {
+	it('should run the app container', function (done) {
 		const	cmdStr	= 'docker run -d -e "amqpConf=amqp://guest:guest@' + containers.rabbit.ip + '/" ' + dockerImgName;
 		console.info(cmdStr);
-		exec(cmdStr, function(err, stdout) {
+		exec(cmdStr, function (err, stdout) {
 			if (err) {
 				console.error('Could not start the app container: ' + err.message);
 				process.exit(1);
@@ -105,7 +105,7 @@ describe('Setup environment', function() {
 			containers.app.id	= stdout.replace(/^\s+|\s+$/g, '');
 
 			// Get the app container IP
-			exec('docker inspect --format \'{{.NetworkSettings.IPAddress}}\' ' + containers.app.id, function(err, stdout) {
+			exec('docker inspect --format \'{{.NetworkSettings.IPAddress}}\' ' + containers.app.id, function (err, stdout) {
 				if (err) {
 					console.error('Could not get the app container IP: ' + err.message);
 					process.exit(1);
@@ -124,28 +124,28 @@ describe('Setup environment', function() {
 	});
 });
 
-describe('Perform the tests', function() {
-	it('should check so the site is up', function(done) {
+describe('Perform the tests', function () {
+	it('should check so the site is up', function (done) {
 		this.timeout(10 * 60 * 1000); // 10 minutes
 
-		testHttp('http://' + containers.app.ip, function(err) {
+		testHttp('http://' + containers.app.ip, function (err) {
 			if (err) throw err;
 			done();
 		});
 	});
 });
 
-describe('Tear down the environment', function() {
+describe('Tear down the environment', function () {
 	this.timeout(1 * 60 * 1000); // 1 minute
 
-	it('should stop the containers', function(done) {
+	it('should stop the containers', function (done) {
 		const	tasks	= [];
 
 		for (const containerName of Object.keys(containers)) {
 			const	container	= containers[containerName];
 
-			tasks.push(function(cb) {
-				runCmd('docker stop -t 1 ' + container.id, {'silent': true}, function(err, exitCode) {
+			tasks.push(function (cb) {
+				runCmd('docker stop -t 1 ' + container.id, {'silent': true}, function (err, exitCode) {
 					if (err) throw err;
 					assert.deepEqual(exitCode, 0);
 					cb();
@@ -156,14 +156,14 @@ describe('Tear down the environment', function() {
 		async.series(tasks, done);
 	});
 
-	it('should remove the containers', function(done) {
+	it('should remove the containers', function (done) {
 		const	tasks	= [];
 
 		for (const containerName of Object.keys(containers)) {
 			const	container	= containers[containerName];
 
-			tasks.push(function(cb) {
-				runCmd('docker rm -f ' + container.id, {'silent': true}, function(err, exitCode) {
+			tasks.push(function (cb) {
+				runCmd('docker rm -f ' + container.id, {'silent': true}, function (err, exitCode) {
 					if (err) throw err;
 					assert.deepEqual(exitCode, 0);
 					cb();
@@ -174,8 +174,8 @@ describe('Tear down the environment', function() {
 		async.parallel(tasks, done);
 	});
 
-	/*it('should remove the docker image', function(done) {
-		runCmd('docker rmi ' + dockerImgName, {'silent': true}, function(err, exitCode) {
+	/*it('should remove the docker image', function (done) {
+		runCmd('docker rmi ' + dockerImgName, {'silent': true}, function (err, exitCode) {
 			if (err) throw err;
 			assert.deepEqual(exitCode, 0);
 			done();

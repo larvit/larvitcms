@@ -18,7 +18,7 @@ lUtils.instances.intercom	= new Intercom(process.env.amqpConf);
 db.setup(dbConf);
 
 // Create a user to work with
-userLib.create('foo', 'bar', {'role': 'admin'}, function(err) {
+userLib.create('foo', 'bar', {'role': 'admin'}, function (err) {
 	if (err) throw err;
 
 	require('larvitadmingui')({
