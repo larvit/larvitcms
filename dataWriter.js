@@ -37,9 +37,9 @@ function listenToQueue(retries, cb) {
 	if (exports.mode === 'master') {
 		listenMethod	= 'consume';
 		options.exclusive	= true;	// It is important no other client tries to sneak
-				// out messages from us, and we want "consume"
-				// since we want the queue to persist even if this
-				// minion goes offline.
+		// out messages from us, and we want "consume"
+		// since we want the queue to persist even if this
+		// minion goes offline.
 	} else if (exports.mode === 'slave' || exports.mode === 'noSync') {
 		listenMethod = 'subscribe';
 	} else {
