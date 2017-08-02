@@ -200,6 +200,7 @@ function runDumpServer(cb) {
 	args.push(db.conf.database);
 
 	// Tables
+	args.push('cms_db_version');
 	args.push('cms_pages');
 	args.push('cms_pagesData');
 	args.push('cms_snippets');
