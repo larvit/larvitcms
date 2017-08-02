@@ -20,131 +20,136 @@ const	topLogPrefix	= 'larvitcms: ./cms.js: ',
  * @param func cb - callback(err, pages)
  */
 function getPages(options, cb) {
-	const	logPrefix	= topLogPrefix + 'getPages() - ',
-		tmpPages	= {},
-		dbFields	= [],
-		pages	= [];
 
-	let	sql;
+	dataWriter.ready(function (err) {
+		const	logPrefix	= topLogPrefix + 'getPages() - ',
+			tmpPages	= {},
+			dbFields	= [],
+			pages	= [];
 
-	if (typeof options === 'function') {
-		cb	= options;
-		options	= {};
-	}
+		let	sql;
 
-	log.debug(logPrefix + 'Called with options: "' + JSON.stringify(options) + '"');
+		if (err) return cb(err);
 
-	// Make sure options that should be arrays actually are arrays
-	// This will simplify our lives in the SQL builder below
-	if (options.langs !== undefined && ! (options.langs instanceof Array)) {
-		options.langs = [options.langs];
-	}
-
-	if (options.uuids !== undefined && ! (options.ids instanceof Array)) {
-		options.uuids = [options.uuids];
-	}
-
-	if (options.slugs !== undefined && ! (options.slugs instanceof Array)) {
-		options.slugs = [options.slugs];
-	}
-
-	// Make sure there is an invalid ID in the id list if it is empty
-	// Since the most logical thing to do is replying with an empty set
-	if (options.uuids instanceof Array && options.uuids.length === 0) {
-		options.uuids.push('');
-	}
-
-	if (options.limit === undefined) {
-		options.limit = 10;
-	}
-
-	sql  = 'SELECT pgd.*, p.*\n';
-	sql += 'FROM cms_pages p\n';
-	sql += '	LEFT JOIN cms_pagesData pgd ON pgd.pageUuid = p.uuid\n';
-	sql += 'WHERE 1 + 1\n';
-
-	// Only get post contents with selected languages
-	if (options.langs !== undefined) {
-		sql += '	AND pgd.lang IN (';
-
-		for (let i = 0; options.langs[i] !== undefined; i ++) {
-			sql += '?,';
-			dbFields.push(options.langs[i]);
+		if (typeof options === 'function') {
+			cb	= options;
+			options	= {};
 		}
 
-		sql = sql.substring(0, sql.length - 1) + ')\n';
-	}
+		log.debug(logPrefix + 'Called with options: "' + JSON.stringify(options) + '"');
 
-	// Only get posts with the current slugs
-	if (options.slugs !== undefined) {
-		sql += '	AND p.uuid IN (SELECT pageUuid FROM cms_pagesData WHERE slug IN (';
-
-		for (let i = 0; options.slugs[i] !== undefined; i ++) {
-			sql += '?,';
-			dbFields.push(options.slugs[i]);
+		// Make sure options that should be arrays actually are arrays
+		// This will simplify our lives in the SQL builder below
+		if (options.langs !== undefined && ! (options.langs instanceof Array)) {
+			options.langs = [options.langs];
 		}
 
-		sql = sql.substring(0, sql.length - 1) + '))\n';
-	}
-
-	// Only get posts with given ids
-	if (options.uuids !== undefined) {
-		sql += '	AND p.uuid IN (';
-
-		for (let i = 0; options.uuids[i] !== undefined; i ++) {
-			sql += '?,';
-			dbFields.push(lUtils.uuidToBuffer(options.uuids[i]));
+		if (options.uuids !== undefined && ! (options.ids instanceof Array)) {
+			options.uuids = [options.uuids];
 		}
 
-		sql = sql.substring(0, sql.length - 1) + ')\n';
-	}
-
-	if (options.published === true) {
-		sql += '	AND p.published = 1\n';
-	} else if (options.published === false) {
-		sql += '	AND p.published = 0\n';
-	}
-
-	sql += 'ORDER BY p.published DESC, p.name\n';
-
-	if (options.limit !== false) {
-		sql += 'LIMIT ' + parseInt(options.limit) + '\n';
-
-		if (options.offset !== undefined) {
-			sql += ' OFFSET ' + parseInt(options.offset);
+		if (options.slugs !== undefined && ! (options.slugs instanceof Array)) {
+			options.slugs = [options.slugs];
 		}
-	}
 
-	db.query(sql, dbFields, function (err, rows) {
-		for (let i = 0; rows[i] !== undefined; i ++) {
-			const	uuid	= lUtils.formatUuid(rows[i].uuid);
+		// Make sure there is an invalid ID in the id list if it is empty
+		// Since the most logical thing to do is replying with an empty set
+		if (options.uuids instanceof Array && options.uuids.length === 0) {
+			options.uuids.push('');
+		}
 
-			if (tmpPages[uuid] === undefined) {
-				tmpPages[uuid] = {
-					'uuid':	uuid,
-					'name':	rows[i].name,
-					'published':	Boolean(rows[i].published),
-					'template':	rows[i].template,
-					'langs':	{}
+		if (options.limit === undefined) {
+			options.limit = 10;
+		}
+
+		sql  = 'SELECT pgd.*, p.*\n';
+		sql += 'FROM cms_pages p\n';
+		sql += '	LEFT JOIN cms_pagesData pgd ON pgd.pageUuid = p.uuid\n';
+		sql += 'WHERE 1 + 1\n';
+
+		// Only get post contents with selected languages
+		if (options.langs !== undefined) {
+			sql += '	AND pgd.lang IN (';
+
+			for (let i = 0; options.langs[i] !== undefined; i ++) {
+				sql += '?,';
+				dbFields.push(options.langs[i]);
+			}
+
+			sql = sql.substring(0, sql.length - 1) + ')\n';
+		}
+
+		// Only get posts with the current slugs
+		if (options.slugs !== undefined) {
+			sql += '	AND p.uuid IN (SELECT pageUuid FROM cms_pagesData WHERE slug IN (';
+
+			for (let i = 0; options.slugs[i] !== undefined; i ++) {
+				sql += '?,';
+				dbFields.push(options.slugs[i]);
+			}
+
+			sql = sql.substring(0, sql.length - 1) + '))\n';
+		}
+
+		// Only get posts with given ids
+		if (options.uuids !== undefined) {
+			sql += '	AND p.uuid IN (';
+
+			for (let i = 0; options.uuids[i] !== undefined; i ++) {
+				sql += '?,';
+				dbFields.push(lUtils.uuidToBuffer(options.uuids[i]));
+			}
+
+			sql = sql.substring(0, sql.length - 1) + ')\n';
+		}
+
+		if (options.published === true) {
+			sql += '	AND p.published = 1\n';
+		} else if (options.published === false) {
+			sql += '	AND p.published = 0\n';
+		}
+
+		sql += 'ORDER BY p.published DESC, p.name\n';
+
+		if (options.limit !== false) {
+			sql += 'LIMIT ' + parseInt(options.limit) + '\n';
+
+			if (options.offset !== undefined) {
+				sql += ' OFFSET ' + parseInt(options.offset);
+			}
+		}
+
+		db.query(sql, dbFields, function (err, rows) {
+			for (let i = 0; rows[i] !== undefined; i ++) {
+				const	uuid	= lUtils.formatUuid(rows[i].uuid);
+
+				if (tmpPages[uuid] === undefined) {
+					tmpPages[uuid] = {
+						'uuid':	uuid,
+						'name':	rows[i].name,
+						'published':	Boolean(rows[i].published),
+						'template':	rows[i].template,
+						'langs':	{}
+					};
+				}
+
+				tmpPages[uuid].langs[rows[i].lang] = {
+					'htmlTitle':	rows[i].htmlTitle,
+					'body1':	rows[i].body1,
+					'body2':	rows[i].body2,
+					'body3':	rows[i].body3,
+					'body4':	rows[i].body4,
+					'body5':	rows[i].body5,
+					'slug':	rows[i].slug
 				};
 			}
 
-			tmpPages[uuid].langs[rows[i].lang] = {
-				'htmlTitle':	rows[i].htmlTitle,
-				'body1':	rows[i].body1,
-				'body2':	rows[i].body2,
-				'body3':	rows[i].body3,
-				'body4':	rows[i].body4,
-				'body5':	rows[i].body5,
-				'slug':	rows[i].slug
-			};
-		}
+			for (const pageUuid in tmpPages) {
+				pages.push(tmpPages[pageUuid]);
+			}
 
-		for (const pageUuid in tmpPages) {
-			pages.push(tmpPages[pageUuid]);
-		}
-
-		cb(null, pages);
+			cb(null, pages);
+		});
 	});
 };
 
@@ -155,72 +160,77 @@ function getPages(options, cb) {
  * @param func cb(err, slugs)
  */
 function getSnippets(options, cb) {
-	const	dbFields	= [];
 
-	let	sql;
+	dataWriter.ready(function (err) {
+		const	dbFields	= [];
 
-	if (typeof options === 'function') {
-		cb	= options;
-		options	= {};
-	}
-
-	if (options.onlySlugs) {
-		sql = 'SELECT DISTINCT slug FROM cms_snippets ORDER BY slug;';
-		db.query(sql, cb);
-		return;
-	}
-
-	sql	= 'SELECT * FROM cms_snippets\n';
-	sql	+= 'WHERE 1 + 1\n';
-
-	if (options.slugs !== undefined) {
-		if (typeof options.slugs === 'string') {
-			options.slugs = [options.slugs];
-		}
-
-		if (options.slugs.length === 0) {
-			options.slugs = [''];
-		}
-
-		sql += '	AND slug IN (';
-
-		for (let i = 0; options.slugs[i] !== undefined; i ++) {
-			sql += '?,';
-			dbFields.push(options.slugs[i]);
-		}
-
-		sql = sql.substring(0, sql.length - 1) + ')\n';
-	}
-
-	sql += 'ORDER BY slug, lang';
-
-	db.query(sql, dbFields, function (err, rows) {
-		const	snippets	= [];
-
-		let	snippet,
-			prevSlug;
+		let	sql;
 
 		if (err) return cb(err);
 
-		for (let i = 0; rows[i] !== undefined; i ++) {
-			if (prevSlug !== rows[i].slug) {
-				if (snippet) {
-					snippets.push(snippet);
-				}
+		if (typeof options === 'function') {
+			cb	= options;
+			options	= {};
+		}
 
-				snippet	= {'slug': rows[i].slug, 'langs': {}};
+		if (options.onlySlugs) {
+			sql = 'SELECT DISTINCT slug FROM cms_snippets ORDER BY slug;';
+			db.query(sql, cb);
+			return;
+		}
+
+		sql	= 'SELECT * FROM cms_snippets\n';
+		sql	+= 'WHERE 1 + 1\n';
+
+		if (options.slugs !== undefined) {
+			if (typeof options.slugs === 'string') {
+				options.slugs = [options.slugs];
 			}
 
-			prevSlug	= rows[i].slug;
-			snippet.langs[rows[i].lang]	= rows[i].body;
+			if (options.slugs.length === 0) {
+				options.slugs = [''];
+			}
+
+			sql += '	AND slug IN (';
+
+			for (let i = 0; options.slugs[i] !== undefined; i ++) {
+				sql += '?,';
+				dbFields.push(options.slugs[i]);
+			}
+
+			sql = sql.substring(0, sql.length - 1) + ')\n';
 		}
 
-		// Add the last one
-		if (snippet) {
-			snippets.push(snippet);
-		}
+		sql += 'ORDER BY slug, lang';
 
-		cb(null, snippets);
+		db.query(sql, dbFields, function (err, rows) {
+			const	snippets	= [];
+
+			let	snippet,
+				prevSlug;
+
+			if (err) return cb(err);
+
+			for (let i = 0; rows[i] !== undefined; i ++) {
+				if (prevSlug !== rows[i].slug) {
+					if (snippet) {
+						snippets.push(snippet);
+					}
+
+					snippet	= {'slug': rows[i].slug, 'langs': {}};
+				}
+
+				prevSlug	= rows[i].slug;
+				snippet.langs[rows[i].lang]	= rows[i].body;
+			}
+
+			// Add the last one
+			if (snippet) {
+				snippets.push(snippet);
+			}
+
+			cb(null, snippets);
+		});
 	});
 }
 

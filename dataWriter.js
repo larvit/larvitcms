@@ -225,6 +225,8 @@ function rmPage(params, deliveryTag, msgUuid) {
 		return exports.emitter.emit(msgUuid, err);
 	}
 
+	tasks.push(ready);
+
 	tasks.push(function (cb) {
 		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
 	});
@@ -252,6 +254,8 @@ function savePage(params, deliveryTag, msgUuid) {
 	}
 
 	log.debug(logPrefix + 'Running with data. "' + JSON.stringify(params.data) + '"');
+
+	tasks.push(ready);
 
 	tasks.push(function (cb) {
 		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
@@ -332,7 +336,8 @@ function saveSnippet(params, deliveryTag, msgUuid) {
 	const	logPrefix	= topLogPrefix + 'saveSnippet() - ',
 		options	= params.data,
 		sql	= 'REPLACE INTO cms_snippets (body, slug, lang) VALUES(?,?,?);',
-		dbFields	= [options.body, options.slug, options.lang];
+		dbFields	= [options.body, options.slug, options.lang],
+		tasks	= [];
 
 	if (options.slug === undefined) {
 		const	err	= new Error('slug not provided');
@@ -340,7 +345,13 @@ function saveSnippet(params, deliveryTag, msgUuid) {
 		return exports.emitter.emit(msgUuid, err);
 	}
 
-	db.query(sql, dbFields, function (err) {
+	tasks.push(ready);
+
+	tasks.push(function (cb) {
+		db.query(sql, dbFields, cb);
+	});
+
+	async.series(tasks, function (err) {
 		exports.emitter.emit(msgUuid, err);
 	});
 }
