@@ -1,184 +1,293 @@
 'use strict';
 
-const	dockerImgName	= 'larvitcmstest',
-	waitForPort	= require('wait-for-port'),
-	containers	= {'rabbit': {}, 'app': {}},
-	validator	= require('validator'),
-	request	= require('request'),
+const	Intercom	= require('larvitamintercom'),
+	//slugify	= require('larvitslugify'),
+	uuidLib	= require('uuid'),
 	assert	= require('assert'),
-	runCmd	= require('larvitruncmd'),
+	lUtils	= require('larvitutils'),
+	slugify	= require('larvitslugify'),
+	cms	= require(__dirname + '/../cms.js'),
 	async	= require('async'),
-	exec	= require('child_process').exec;
+	log	= require('winston'),
+	db	= require('larvitdb'),
+	fs	= require('fs');
 
-function testHttp(url, retry, cb) {
-	if (typeof retry === 'function') {
-		cb	= retry;
-		retry	= 0;
-	}
+cms.dataWriter	= require(__dirname + '/../dataWriter.js');
+cms.dataWriter.mode	= 'master';
 
-	if (retry === 0) {
-		process.stdout.write('Waiting for ' + url + ' ');
-	} else {
-		process.stdout.write('.');
-	}
+// Set up winston
+log.remove(log.transports.Console);
+/**/log.add(log.transports.Console, {
+	'level':	'warn',
+	'colorize':	true,
+	'timestamp':	true,
+	'json':	false
+});/**/
 
-	request(url, {timeout: 1000}, function (err, response) {
-		if (err) {
-			if (retry < 60 && (err.code === 'ECONNREFUSED' || err.code === 'EHOSTUNREACH' || err.code === 'ETIMEDOUT')) {
-				setTimeout(function () {
-					testHttp(url, retry + 1, cb);
-				}, 1000);
+before(function (done) {
+	this.timeout(10000);
+	const	tasks	= [];
+
+	// Run DB Setup
+	tasks.push(function (cb) {
+		let confFile;
+
+		if (process.env.DBCONFFILE === undefined) {
+			confFile = __dirname + '/../config/db_test.json';
+		} else {
+			confFile = process.env.DBCONFFILE;
+		}
+
+		log.verbose('DB config file: "' + confFile + '"');
+
+		// First look for absolute path
+		fs.stat(confFile, function (err) {
+			if (err) {
+
+				// Then look for this string in the config folder
+				confFile = __dirname + '/../config/' + confFile;
+				fs.stat(confFile, function (err) {
+					if (err) throw err;
+					log.verbose('DB config: ' + JSON.stringify(require(confFile)));
+					db.setup(require(confFile), cb);
+				});
+
 				return;
 			}
 
-			throw err;
-		}
-
-		assert.deepEqual(response.statusCode,	200);
-		process.stdout.write('done!\n');
-		cb();
-	});
-}
-
-describe('Setup environment', function () {
-	it('should build the docker image', function (done) {
-		this.timeout(10 * 60 * 1000); // 10 minutes
-
-		//runCmd('docker build --no-cache -t ' + dockerImgName + ' ' + __dirname + '/../testEnv', {'silent': true}, function (err, exitCode) {
-		runCmd('docker build -t ' + dockerImgName + ' ' + __dirname + '/../testEnv', {'silent': true}, function (err, exitCode) {
-			if (err) {
-				console.error('Could not build image: ' + err.message);
-				process.exit(1);
-			}
-
-			assert.deepEqual(exitCode, 0);
-			done();
+			log.verbose('DB config: ' + JSON.stringify(require(confFile)));
+			db.setup(require(confFile), cb);
 		});
 	});
 
-	it('should run rabbitMQ', function (done) {
-		const	cmdStr	= 'docker run -d rabbitmq';
-
-		this.timeout(5 * 60 * 1000); // 5 minutes
-
-		console.info(cmdStr);
-		exec(cmdStr, function (err, stdout) {
-			if (err) {
-				console.error('Could not start RabbitMQ: ' + err.message);
-				process.exit(1);
-			}
-
-			containers.rabbit.id	= stdout.replace(/^\s+|\s+$/g, '');
-
-			// Get the container IP
-			exec('docker inspect --format \'{{.NetworkSettings.IPAddress}}\' ' + containers.rabbit.id, function (err, stdout) {
-				if (err) {
-					console.error('Could not get RabbitMQ IP: ' + err.message);
-					process.exit(1);
-				}
-
-				containers.rabbit.ip	= stdout.replace(/^\s+|\s+$/g, '');
-
-				if ( ! validator.isIP(containers.rabbit.ip)) {
-					console.error('Invalid IP gotten for RabbitMQ: "' + containers.rabbit.ip + '"');
-					process.exit(1);
-				}
-
-				waitForPort(containers.rabbit.ip, 5672, function (err) {
-					if (err) throw err;
-
-					done();
-				});
-			});
-		});
-	});
-
-	it('should run the app container', function (done) {
-		const	cmdStr	= 'docker run -d -e "amqpConf=amqp://guest:guest@' + containers.rabbit.ip + '/" ' + dockerImgName;
-		console.info(cmdStr);
-		exec(cmdStr, function (err, stdout) {
-			if (err) {
-				console.error('Could not start the app container: ' + err.message);
-				process.exit(1);
-			}
-
-			containers.app.id	= stdout.replace(/^\s+|\s+$/g, '');
-
-			// Get the app container IP
-			exec('docker inspect --format \'{{.NetworkSettings.IPAddress}}\' ' + containers.app.id, function (err, stdout) {
-				if (err) {
-					console.error('Could not get the app container IP: ' + err.message);
-					process.exit(1);
-				}
-
-				containers.app.ip	= stdout.replace(/^\s+|\s+$/g, '');
-
-				if ( ! validator.isIP(containers.app.ip)) {
-					console.error('Invalid IP gotten for the app container: "' + containers.app.ip + '"');
-					process.exit(1);
-				}
-
-				done();
-			});
-		});
-	});
-});
-
-describe('Perform the tests', function () {
-	it('should check so the site is up', function (done) {
-		this.timeout(10 * 60 * 1000); // 10 minutes
-
-		testHttp('http://' + containers.app.ip, function (err) {
+	// Check for empty db
+	tasks.push(function (cb) {
+		db.query('SHOW TABLES', function (err, rows) {
 			if (err) throw err;
+
+			if (rows.length) {
+				throw new Error('Database is not empty. To make a test, you must supply an empty database!');
+			}
+
+			cb();
+		});
+	});
+
+	// Setup intercom
+	tasks.push(function (cb) {
+		lUtils.instances.intercom = new Intercom('loopback interface');
+		lUtils.instances.intercom.on('ready', cb);
+	});
+
+	tasks.push(function (cb) {
+		cms.dataWriter.ready(cb);
+	});
+
+	async.series(tasks, function (err) {
+		done(err);
+	});
+});
+
+after(function (done) {
+	//return done();
+	db.removeAllTables(done);
+});
+
+describe('Sanity test', function () {
+	it('Get pages of empty database', function (done) {
+		cms.getPages({}, function (err, pages) {
+			assert.strictEqual(err, null);
+			assert.deepEqual(pages, []);
 			done();
 		});
 	});
 });
 
-describe('Tear down the environment', function () {
-	this.timeout(1 * 60 * 1000); // 1 minute
+describe('Cms page CRUD test', function () {
+	const	cmsPage = {
+			'uuid': uuidLib.v1(),
+			'name': 'foo',
+			'published': true,
+			'template': 'default',
+			'langs': {
+				'en': {
+					'htmlTitle':	'foobar',
+					'slug':	'bar',
+					'body':	'lots of foo and bars'
+				},
+				'sv': {
+					'htmlTitle':	'sv_foobar',
+					'slug':	'sv_bar',
+					'body':	'sv_lots of foo and bars'
+				}
+			}
+		},
+		cmsPage2 = {
+			'uuid': uuidLib.v1(),
+			'name': 'foo2',
+			'published': false,
+			'template': 'default',
+			'langs': {
+				'en': {
+					'htmlTitle':	'foobar2',
+					'slug':	'bar2',
+					'body':	'lots of foo and bars2'
+				},
+				'sv': {
+					'htmlTitle':	'sv_foobar2',
+					'slug':	'sv_bar2',
+					'body':	'sv_lots of foo and bars2'
+				}
+			}
+		};
 
-	it('should stop the containers', function (done) {
-		const	tasks	= [];
+	it('Create 2 new pages', function (done) {
+		const tasks = [];
 
-		for (const containerName of Object.keys(containers)) {
-			const	container	= containers[containerName];
+		tasks.push(function (cb) {
+			cms.savePage(cmsPage, cb);
+		});
 
-			tasks.push(function (cb) {
-				runCmd('docker stop -t 1 ' + container.id, {'silent': true}, function (err, exitCode) {
-					if (err) throw err;
-					assert.deepEqual(exitCode, 0);
-					cb();
-				});
+		tasks.push(function (cb) {
+			cms.savePage(cmsPage2, cb);
+		});
+
+		tasks.push(function (cb) {
+			cms.getPages(function (err, pages) {
+
+				assert.strictEqual(pages.length, 2);
+				assert.strictEqual(err, null);
+
+				assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+				assert.strictEqual(pages[0].name, 'foo');
+				assert.strictEqual(Object.keys(pages[0].langs).length, 2);
+				assert.strictEqual(pages[0].langs.en.htmlTitle, 'foobar');
+				assert.strictEqual(pages[0].langs.sv.htmlTitle, 'sv_foobar');
+
+				assert.strictEqual(pages[1].uuid, cmsPage2.uuid);
+				assert.strictEqual(pages[1].name, 'foo2');
+				assert.strictEqual(Object.keys(pages[1].langs).length, 2);
+				assert.strictEqual(pages[1].langs.en.htmlTitle, 'foobar2');
+				assert.strictEqual(pages[1].langs.sv.htmlTitle, 'sv_foobar2');
+
+				cb();
 			});
-		}
+		});
 
 		async.series(tasks, done);
 	});
 
-	it('should remove the containers', function (done) {
-		const	tasks	= [];
+	it('Get page by uuid', function (cb) {
+		cms.getPages({'uuids': cmsPage.uuid}, function (err, pages) {
+			const page = pages[0];
 
-		for (const containerName of Object.keys(containers)) {
-			const	container	= containers[containerName];
-
-			tasks.push(function (cb) {
-				runCmd('docker rm -f ' + container.id, {'silent': true}, function (err, exitCode) {
-					if (err) throw err;
-					assert.deepEqual(exitCode, 0);
-					cb();
-				});
-			});
-		}
-
-		async.parallel(tasks, done);
+			assert.strictEqual(pages.length, 1);
+			assert.strictEqual(err, null);
+			assert.strictEqual(page.uuid, cmsPage.uuid);
+			assert.strictEqual(page.name, 'foo');
+			assert.strictEqual(Object.keys(page.langs).length, 2);
+			assert.strictEqual(page.langs.en.htmlTitle, 'foobar');
+			assert.strictEqual(page.langs.sv.htmlTitle, 'sv_foobar');
+			cb();
+		});
 	});
 
-	/*it('should remove the docker image', function (done) {
-		runCmd('docker rmi ' + dockerImgName, {'silent': true}, function (err, exitCode) {
-			if (err) throw err;
-			assert.deepEqual(exitCode, 0);
-			done();
+	it('Get pages with limit', function (cb) {
+		cms.getPages({'limit': 1}, function (err, pages) {
+			assert.strictEqual(err, null);
+			assert.strictEqual(pages.length, 1);
+			cb();
 		});
-	})*/;
+	});
+
+	it('Get page by slug', function (cb) {
+		cms.getPages({'slugs': 'svbar'}, function (err, pages) {
+			assert.strictEqual(err, null);
+			assert.strictEqual(pages.length, 1);
+			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+			cb();
+		});
+	});
+
+	it('Only get published pages', function (cb) {
+		cms.getPages({'published': true}, function (err, pages) {
+			assert.strictEqual(err, null);
+			assert.strictEqual(pages.length, 1);
+			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+			cb();
+		});
+	});
+
+	it('Get by uuid and only one lang', function (cb) {
+		cms.getPages({'uuids': cmsPage.uuid, 'langs': 'en'}, function (err, pages) {
+			assert.strictEqual(err, null);
+			assert.strictEqual(pages.length, 1);
+			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+			assert.strictEqual(Object.keys(pages[0].langs).length, 1);
+			cb();
+		});
+	});
+
+	it('Remove cms page', function (cb) {
+		const tasks	= [];
+
+		tasks.push(function (cb) {
+			cms.rmPage(cmsPage2.uuid, cb);
+		});
+
+		tasks.push(function (cb) {
+			cms.getPages(function (err, pages) {
+				assert.strictEqual(err, null);
+				assert.strictEqual(pages.length, 1);
+				assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+				cb();
+			});
+		});
+
+		async.series(tasks, cb);
+	});
+});
+
+describe('Snippets CRUD', function () {
+	const snippet1 = {
+			'body': 'body 1 en',
+			'slug': slugify('body 1 en'),
+			'lang': 'en'
+		},
+		snippet2	= {
+			'body': 'body 2 sv',
+			'slug': slugify('body 2 sv'),
+			'lang': 'sv'
+		};
+
+	it('Create snippets', function (cb) {
+		const tasks	= [];
+
+		tasks.push(function (cb) {
+			cms.saveSnippet(snippet1, cb);
+		});
+
+		tasks.push(function (cb) {
+			cms.saveSnippet(snippet2, cb);
+		});
+
+		tasks.push(function (cb) {
+			cms.getSnippets(function (err, snippets) {
+				assert.strictEqual(err, null);
+				assert.strictEqual(snippets.length, 2);
+				cb();
+			});
+		});
+
+		async.series(tasks, cb);
+	});
+
+	it('Get snippet by slug', function (cb) {
+		cms.getSnippets({'slugs': slugify('body 1 en')}, function (err, snippets) {
+			assert.strictEqual(err, null);
+			assert.strictEqual(snippets.length, 1);
+			assert.strictEqual(snippets[0].langs.en, 'body 1 en');
+			cb();
+		});
+	});
 });

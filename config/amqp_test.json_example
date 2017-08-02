@@ -1,0 +1,3 @@
+{
+	"default": "amqp://guest:guest@172.17.0.4/"
+}
