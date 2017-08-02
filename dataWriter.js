@@ -107,7 +107,7 @@ function ready(retries, cb) {
 	}
 
 	if (typeof cb !== 'function') {
-		cb = function (){};
+		cb	= function (){};
 	}
 
 	if (retries === undefined) {
@@ -215,12 +215,12 @@ function runDumpServer(cb) {
 }
 
 function rmPage(params, deliveryTag, msgUuid) {
-	const options	= params.data,
-		logPrefix	= topLogPrefix + 'rmPage() - ',
+	const	logPrefix	= topLogPrefix + 'rmPage() - ',
+		options	= params.data,
 		tasks	= [];
 
 	if (options.uuid === 'undefined ') {
-		const err = new Error('pageUuid not provided');
+		const	err	= new Error('pageUuid not provided');
 		log.warn(logPrefix + err.message);
 		return exports.emitter.emit(msgUuid, err);
 	}
@@ -239,15 +239,14 @@ function rmPage(params, deliveryTag, msgUuid) {
 }
 
 function savePage(params, deliveryTag, msgUuid) {
-
 	const	logPrefix	= topLogPrefix + 'savePage() - ',
-		options = params.data,
+		options	= params.data,
 		tasks	= [];
 
 	let	lang;
 
 	if (options.uuid === 'undefined ') {
-		const err = new Error('pageUuid not provided');
+		const	err	= new Error('pageUuid not provided');
 		log.warn(logPrefix + err.message);
 		return exports.emitter.emit(msgUuid, err);
 	}
@@ -329,15 +328,14 @@ function savePage(params, deliveryTag, msgUuid) {
 	});
 }
 
-function saveSnippet (params, deliveryTag, msgUuid) {
-
+function saveSnippet(params, deliveryTag, msgUuid) {
 	const	logPrefix	= topLogPrefix + 'saveSnippet() - ',
 		options	= params.data,
 		sql	= 'REPLACE INTO cms_snippets (body, slug, lang) VALUES(?,?,?);',
 		dbFields	= [options.body, options.slug, options.lang];
 
 	if (options.slug === undefined) {
-		const err = new Error('slug not provided');
+		const	err	= new Error('slug not provided');
 		log.warn(logPrefix + err.message);
 		return exports.emitter.emit(msgUuid, err);
 	}

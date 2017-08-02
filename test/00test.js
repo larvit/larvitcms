@@ -1,13 +1,12 @@
 'use strict';
 
 const	Intercom	= require('larvitamintercom'),
-	//slugify	= require('larvitslugify'),
 	uuidLib	= require('uuid'),
+	slugify	= require('larvitslugify'),
 	assert	= require('assert'),
 	lUtils	= require('larvitutils'),
-	slugify	= require('larvitslugify'),
-	cms	= require(__dirname + '/../cms.js'),
 	async	= require('async'),
+	cms	= require(__dirname + '/../cms.js'),
 	log	= require('winston'),
 	db	= require('larvitdb'),
 	fs	= require('fs'),
@@ -26,17 +25,18 @@ log.remove(log.transports.Console);
 });/**/
 
 before(function (done) {
-	this.timeout(10000);
 	const	tasks	= [];
+
+	this.timeout(10000);
 
 	// Run DB Setup
 	tasks.push(function (cb) {
-		let confFile;
+		let	confFile;
 
 		if (process.env.DBCONFFILE === undefined) {
-			confFile = __dirname + '/../config/db_test.json';
+			confFile	= __dirname + '/../config/db_test.json';
 		} else {
-			confFile = process.env.DBCONFFILE;
+			confFile	= process.env.DBCONFFILE;
 		}
 
 		log.verbose('DB config file: "' + confFile + '"');
@@ -90,7 +90,6 @@ before(function (done) {
 });
 
 after(function (done) {
-	//return done();
 	db.removeAllTables(done);
 });
 
@@ -143,7 +142,7 @@ describe('Cms page CRUD test', function () {
 		};
 
 	it('Create 2 new pages', function (done) {
-		const tasks = [];
+		const	tasks	= [];
 
 		tasks.push(function (cb) {
 			cms.savePage(cmsPage, cb);
@@ -155,21 +154,20 @@ describe('Cms page CRUD test', function () {
 
 		tasks.push(function (cb) {
 			cms.getPages(function (err, pages) {
-
 				assert.strictEqual(pages.length, 2);
 				assert.strictEqual(err, null);
 
-				assert.strictEqual(pages[0].uuid, cmsPage.uuid);
-				assert.strictEqual(pages[0].name, 'foo');
-				assert.strictEqual(Object.keys(pages[0].langs).length, 2);
-				assert.strictEqual(pages[0].langs.en.htmlTitle, 'foobar');
-				assert.strictEqual(pages[0].langs.sv.htmlTitle, 'sv_foobar');
+				assert.strictEqual(pages[0].uuid,	cmsPage.uuid);
+				assert.strictEqual(pages[0].name,	'foo');
+				assert.strictEqual(Object.keys(pages[0].langs).length,	2);
+				assert.strictEqual(pages[0].langs.en.htmlTitle,	'foobar');
+				assert.strictEqual(pages[0].langs.sv.htmlTitle,	'sv_foobar');
 
-				assert.strictEqual(pages[1].uuid, cmsPage2.uuid);
-				assert.strictEqual(pages[1].name, 'foo2');
-				assert.strictEqual(Object.keys(pages[1].langs).length, 2);
-				assert.strictEqual(pages[1].langs.en.htmlTitle, 'foobar2');
-				assert.strictEqual(pages[1].langs.sv.htmlTitle, 'sv_foobar2');
+				assert.strictEqual(pages[1].uuid,	cmsPage2.uuid);
+				assert.strictEqual(pages[1].name,	'foo2');
+				assert.strictEqual(Object.keys(pages[1].langs).length,	2);
+				assert.strictEqual(pages[1].langs.en.htmlTitle,	'foobar2');
+				assert.strictEqual(pages[1].langs.sv.htmlTitle,	'sv_foobar2');
 
 				cb();
 			});
@@ -182,58 +180,58 @@ describe('Cms page CRUD test', function () {
 		cms.getPages({'uuids': cmsPage.uuid}, function (err, pages) {
 			const page = pages[0];
 
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(err, null);
-			assert.strictEqual(page.uuid, cmsPage.uuid);
-			assert.strictEqual(page.name, 'foo');
-			assert.strictEqual(Object.keys(page.langs).length, 2);
-			assert.strictEqual(page.langs.en.htmlTitle, 'foobar');
-			assert.strictEqual(page.langs.sv.htmlTitle, 'sv_foobar');
+			assert.strictEqual(pages.length,	1);
+			assert.strictEqual(err,	null);
+			assert.strictEqual(page.uuid,	cmsPage.uuid);
+			assert.strictEqual(page.name,	'foo');
+			assert.strictEqual(Object.keys(page.langs).length,	2);
+			assert.strictEqual(page.langs.en.htmlTitle,	'foobar');
+			assert.strictEqual(page.langs.sv.htmlTitle,	'sv_foobar');
 			cb();
 		});
 	});
 
 	it('Get pages with limit', function (cb) {
 		cms.getPages({'limit': 1}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
+			assert.strictEqual(err,	null);
+			assert.strictEqual(pages.length,	1);
 			cb();
 		});
 	});
 
 	it('Get page by slug', function (cb) {
 		cms.getPages({'slugs': 'svbar'}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+			assert.strictEqual(err,	null);
+			assert.strictEqual(pages.length,	1);
+			assert.strictEqual(pages[0].uuid,	cmsPage.uuid);
 			cb();
 		});
 	});
 
 	it('Only get published pages', function (cb) {
 		cms.getPages({'published': true}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+			assert.strictEqual(err,	null);
+			assert.strictEqual(pages.length,	1);
+			assert.strictEqual(pages[0].uuid,	cmsPage.uuid);
 			cb();
 		});
 	});
 
 	it('Get by uuid and only one lang', function (cb) {
 		cms.getPages({'uuids': cmsPage.uuid, 'langs': 'en'}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
-			assert.strictEqual(Object.keys(pages[0].langs).length, 1);
+			assert.strictEqual(err,	null);
+			assert.strictEqual(pages.length,	1);
+			assert.strictEqual(pages[0].uuid,	cmsPage.uuid);
+			assert.strictEqual(Object.keys(pages[0].langs).length,	1);
 			cb();
 		});
 	});
 
 	it('Update cms page', function (cb) {
-		const updatePage = _.cloneDeep(cmsPage),
+		const	updatePage	= _.cloneDeep(cmsPage),
 			tasks	= [];
 
-		updatePage.langs.en.body1 += ' and other stuff';
+		updatePage.langs.en.body1	+= ' and other stuff';
 
 		tasks.push(function (cb) {
 			cms.savePage(updatePage, cb);
@@ -241,9 +239,9 @@ describe('Cms page CRUD test', function () {
 
 		tasks.push(function (cb) {
 			cms.getPages({'uuids': cmsPage.uuid}, function (err, pages) {
-				assert.strictEqual(err, null);
-				assert.strictEqual(pages.length, 1);
-				assert.strictEqual(pages[0].langs.en.body1, 'lots of foo and bars and other stuff');
+				assert.strictEqual(err,	null);
+				assert.strictEqual(pages.length,	1);
+				assert.strictEqual(pages[0].langs.en.body1,	'lots of foo and bars and other stuff');
 				cb();
 			});
 		});
@@ -252,7 +250,7 @@ describe('Cms page CRUD test', function () {
 	});
 
 	it('Remove cms page', function (cb) {
-		const tasks	= [];
+		const	tasks	= [];
 
 		tasks.push(function (cb) {
 			cms.rmPage(cmsPage2.uuid, cb);
@@ -260,9 +258,9 @@ describe('Cms page CRUD test', function () {
 
 		tasks.push(function (cb) {
 			cms.getPages(function (err, pages) {
-				assert.strictEqual(err, null);
-				assert.strictEqual(pages.length, 1);
-				assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+				assert.strictEqual(err,	null);
+				assert.strictEqual(pages.length,	1);
+				assert.strictEqual(pages[0].uuid,	cmsPage.uuid);
 				cb();
 			});
 		});
@@ -272,10 +270,10 @@ describe('Cms page CRUD test', function () {
 });
 
 describe('Snippets CRUD', function () {
-	const snippet1 = {
-			'body': 'body 1 en',
-			'slug': slugify('body 1 en'),
-			'lang': 'en'
+	const	snippet1	= {
+			'body':	'body 1 en',
+			'slug':	slugify('body 1 en'),
+			'lang':	'en'
 		},
 		snippet2	= {
 			'body': 'body 2 sv',
@@ -284,7 +282,7 @@ describe('Snippets CRUD', function () {
 		};
 
 	it('Create snippets', function (cb) {
-		const tasks	= [];
+		const	tasks	= [];
 
 		tasks.push(function (cb) {
 			cms.saveSnippet(snippet1, cb);
@@ -296,8 +294,8 @@ describe('Snippets CRUD', function () {
 
 		tasks.push(function (cb) {
 			cms.getSnippets(function (err, snippets) {
-				assert.strictEqual(err, null);
-				assert.strictEqual(snippets.length, 2);
+				assert.strictEqual(err,	null);
+				assert.strictEqual(snippets.length,	2);
 				cb();
 			});
 		});
@@ -307,9 +305,9 @@ describe('Snippets CRUD', function () {
 
 	it('Get snippet by slug', function (cb) {
 		cms.getSnippets({'slugs': slugify('body 1 en')}, function (err, snippets) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(snippets.length, 1);
-			assert.strictEqual(snippets[0].langs.en, 'body 1 en');
+			assert.strictEqual(err,	null);
+			assert.strictEqual(snippets.length,	1);
+			assert.strictEqual(snippets[0].langs.en,	'body 1 en');
 			cb();
 		});
 	});

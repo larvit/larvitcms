@@ -1,15 +1,36 @@
-sudo: required
-
 language: node_js
 
-node_js:
-    - 6
-    - 7
-    - 8
+env:
+  - CXX=g++-4.8
 
-services:
-  - docker
+node_js:
+  - 4
+  - 6
+  - 7
+  - 8
 
 notifications:
   email:
     - lilleman@larvit.se
+
+before_install:
+  - $CXX --version
+
+install:
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then export CXX=g++-4.8; fi
+  - npm i
+
+before_script:
+  - mysql -e 'CREATE DATABASE test'
+
+script: mocha test/test.js -confFile=db_travis.json
+
+services:
+  - mysql
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-4.8

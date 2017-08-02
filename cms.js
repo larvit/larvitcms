@@ -1,6 +1,6 @@
 'use strict';
 
-const	topLogPrefix	= 'larvitcms: ./cms.js - ',
+const	topLogPrefix	= 'larvitcms: ./cms.js: ',
 	dataWriter	= require(__dirname + '/dataWriter.js'),
 	lUtils	= require('larvitutils'),
 	log	= require('winston'),
@@ -156,7 +156,6 @@ function getPages(options, cb) {
  * @param func cb(err, slugs)
  */
 function getSnippets(options, cb) {
-
 	const	dbFields	= [];
 
 	let	sql;
@@ -197,7 +196,7 @@ function getSnippets(options, cb) {
 	sql += 'ORDER BY slug, lang';
 
 	db.query(sql, dbFields, function (err, rows) {
-		const snippets = [];
+		const	snippets	= [];
 
 		let	snippet,
 			prevSlug;
@@ -210,12 +209,11 @@ function getSnippets(options, cb) {
 					snippets.push(snippet);
 				}
 
-				snippet = {'slug': rows[i].slug, 'langs': {}};
+				snippet	= {'slug': rows[i].slug, 'langs': {}};
 			}
 
-			prevSlug = rows[i].slug;
-
-			snippet.langs[rows[i].lang] = rows[i].body;
+			prevSlug	= rows[i].slug;
+			snippet.langs[rows[i].lang]	= rows[i].body;
 		}
 
 		// Add the last one
@@ -294,9 +292,9 @@ function saveSnippet(data, cb) {
 	});
 }
 
+exports.dataWriter	= dataWriter;
 exports.getPages	= getPages;
 exports.getSnippets	= getSnippets;
 exports.rmPage	= rmPage;
 exports.savePage	= savePage;
 exports.saveSnippet	= saveSnippet;
-exports.dataWriter	= dataWriter;

@@ -1,7 +1,7 @@
 'use strict';
 
-const	async	= require('async'),
-	slugify	= require('larvitslugify'),
+const	slugify	= require('larvitslugify'),
+	async	= require('async'),
 	cms	= require('larvitcms');
 
 exports.run = function (req, res, cb) {
