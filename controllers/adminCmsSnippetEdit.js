@@ -1,12 +1,13 @@
 'use strict';
 
 const	async	= require('async'),
+	slugify	= require('larvitslugify'),
 	cms	= require('larvitcms');
 
 exports.run = function (req, res, cb) {
 	const	tasks	= [],
 		data	= {'global': res.globalData},
-		slug	= res.globalData.urlParsed.query.slug;
+		slug	= res.globalData.urlParsed.query.slug || slugify(res.globalData.formFields.slug);
 
 	data.global.menuControllerName = 'adminCmsSnippets';
 
