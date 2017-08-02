@@ -116,9 +116,8 @@ function getPages(options, cb) {
 	}
 
 	db.query(sql, dbFields, function (err, rows) {
-
 		for (let i = 0; rows[i] !== undefined; i ++) {
-			const uuid = lUtils.formatUuid(rows[i].uuid);
+			const	uuid	= lUtils.formatUuid(rows[i].uuid);
 
 			if (tmpPages[uuid] === undefined) {
 				tmpPages[uuid] = {
