@@ -255,11 +255,11 @@ function savePage(params, deliveryTag, msgUuid) {
 	log.debug(logPrefix + 'Running with data. "' + JSON.stringify(params.data) + '"');
 
 	tasks.push(function (cb) {
-		db.query('DELETE FROM cms_pages WHERE uuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
+		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
 	});
 
 	tasks.push(function (cb) {
-		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
+		db.query('DELETE FROM cms_pages WHERE uuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
 	});
 
 	tasks.push(function (cb) {

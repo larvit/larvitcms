@@ -1,15 +1,15 @@
 'use strict';
 
 const	async	= require('async'),
+	uuid	= require('uuid'),
 	lfs	= require('larvitfs'),
 	cms	= require('larvitcms'),
 	_	= require('lodash');
 
 exports.run = function (req, res, cb) {
 	const	data	= {'global': res.globalData},
-		tasks	= [];
-
-	let	pageId	= res.globalData.urlParsed.query.id;
+		tasks	= [],
+		pageUuid	= res.globalData.urlParsed.query.uuid || uuid.v1();
 
 	data.global.menuControllerName	= 'adminCmsPages';
 	data.cmsTemplates	= require(lfs.getPathSync('config/cmsTemplates.json'));
@@ -32,14 +32,11 @@ exports.run = function (req, res, cb) {
 
 		// Save the data
 		tasks.push(function (cb) {
-			const	saveObj = {'name': res.globalData.formFields.name, 'template': res.globalData.formFields.template, 'langs': {}};
+			const	saveObj = { 'uuid': pageUuid, 'name': res.globalData.formFields.name, 'template': res.globalData.formFields.template, 'langs': {}};
 
 			let	fieldName,
 				field,
 				lang;
-
-			if (pageId !== undefined)
-				saveObj.id = pageId;
 
 			if (res.globalData.formFields.published) {
 				saveObj.published = true;
@@ -68,18 +65,19 @@ exports.run = function (req, res, cb) {
 				}
 			}
 
-			cms.savePage(saveObj, function (err, entry) {
+			console.log(saveObj);
+
+			cms.savePage(saveObj, function (err) {
 				if (err) return cb(err);
 
-				// Redirect to a new URL if a new pageId was created
-				if ( ! pageId) {
-					req.session.data.nextCallData	= {'global': {'messages': ['New page created with ID ' + entry.id]}};
-					res.statusCode	= 302;
-					res.setHeader('Location', '/adminCmsPageEdit?id=' + entry.id + '&langs=' + res.globalData.urlParsed.query.langs);
-					pageId	= entry.id;
+				if (res.globalData.urlParsed.query.uuid !== undefined) {
+					req.session.data.nextCallData	= {'global': {'messages': ['New page created with uuid ' + pageUuid]}};
+				} else {
+					req.session.data.nextCallData	= {'global': {'messages': ['Saved']}};
 				}
 
-				data.global.messages = ['Saved'];
+				res.statusCode	= 302;
+				res.setHeader('Location', '/adminCmsPageEdit?uuid=' + pageUuid + '&langs=' + res.globalData.urlParsed.query.langs);
 
 				cb();
 			});
@@ -87,12 +85,12 @@ exports.run = function (req, res, cb) {
 	}
 
 	// Delete a page
-	if (res.globalData.formFields.delete !== undefined && pageId !== undefined) {
+	if (res.globalData.formFields.delete !== undefined && res.globalData.urlParsed.query.uuid !== undefined) {
 		tasks.push(function (cb) {
-			cms.rmPage(pageId, function (err) {
+			cms.rmPage(uuid, function (err) {
 				if (err) return cb(err);
 
-				req.session.data.nextCallData	= {'global': {'messages': ['Page with ID ' + pageId + ' deleted']}};
+				req.session.data.nextCallData	= {'global': {'messages': ['Page with Uuid ' + uuid + ' deleted']}};
 				res.statusCode	= 302;
 				res.setHeader('Location', '/adminCmsPages');
 				cb();
@@ -101,9 +99,9 @@ exports.run = function (req, res, cb) {
 	}
 
 	// Load data from database
-	else if (pageId !== undefined) {
+	else if (res.globalData.urlParsed.query.uuid !== undefined) {
 		tasks.push(function (cb) {
-			cms.getPages({'ids': pageId}, function (err, rows) {
+			cms.getPages({'uuids': uuid}, function (err, rows) {
 				let	lang;
 
 				if (rows[0] !== undefined) {

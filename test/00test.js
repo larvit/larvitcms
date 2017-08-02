@@ -10,7 +10,8 @@ const	Intercom	= require('larvitamintercom'),
 	async	= require('async'),
 	log	= require('winston'),
 	db	= require('larvitdb'),
-	fs	= require('fs');
+	fs	= require('fs'),
+	_	= require('lodash');
 
 cms.dataWriter	= require(__dirname + '/../dataWriter.js');
 cms.dataWriter.mode	= 'master';
@@ -113,12 +114,12 @@ describe('Cms page CRUD test', function () {
 				'en': {
 					'htmlTitle':	'foobar',
 					'slug':	'bar',
-					'body':	'lots of foo and bars'
+					'body1':	'lots of foo and bars'
 				},
 				'sv': {
 					'htmlTitle':	'sv_foobar',
 					'slug':	'sv_bar',
-					'body':	'sv_lots of foo and bars'
+					'body1':	'sv_lots of foo and bars'
 				}
 			}
 		},
@@ -131,12 +132,12 @@ describe('Cms page CRUD test', function () {
 				'en': {
 					'htmlTitle':	'foobar2',
 					'slug':	'bar2',
-					'body':	'lots of foo and bars2'
+					'body1':	'lots of foo and bars2'
 				},
 				'sv': {
 					'htmlTitle':	'sv_foobar2',
 					'slug':	'sv_bar2',
-					'body':	'sv_lots of foo and bars2'
+					'body1':	'sv_lots of foo and bars2'
 				}
 			}
 		};
@@ -226,6 +227,28 @@ describe('Cms page CRUD test', function () {
 			assert.strictEqual(Object.keys(pages[0].langs).length, 1);
 			cb();
 		});
+	});
+
+	it('Update cms page', function (cb) {
+		const updatePage = _.cloneDeep(cmsPage),
+			tasks	= [];
+
+		updatePage.langs.en.body1 += ' and other stuff';
+
+		tasks.push(function (cb) {
+			cms.savePage(updatePage, cb);
+		});
+
+		tasks.push(function (cb) {
+			cms.getPages({'uuids': cmsPage.uuid}, function (err, pages) {
+				assert.strictEqual(err, null);
+				assert.strictEqual(pages.length, 1);
+				assert.strictEqual(pages[0].langs.en.body1, 'lots of foo and bars and other stuff');
+				cb();
+			});
+		});
+
+		async.series(tasks, cb);
 	});
 
 	it('Remove cms page', function (cb) {

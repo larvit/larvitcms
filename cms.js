@@ -299,3 +299,4 @@ exports.getSnippets	= getSnippets;
 exports.rmPage	= rmPage;
 exports.savePage	= savePage;
 exports.saveSnippet	= saveSnippet;
+exports.dataWriter	= dataWriter;
