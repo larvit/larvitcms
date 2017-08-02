@@ -18,7 +18,7 @@
 		<div class="row">
 			<div class="three columns">
 				<label for="slug">Slug</label>
-				<input type="text" value="<%= global.urlParsed.query.slug %>" disabled="disabled" />
+				<input type="text" value="<%= global.urlParsed.query.slug %>" name="slug" <% if (global.urlParsed.query.slug !== undefined) { print('readonly="readonly"'); }  %> />
 			</div>
 		</div>
 

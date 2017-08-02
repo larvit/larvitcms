@@ -65,12 +65,10 @@ exports.run = function (req, res, cb) {
 				}
 			}
 
-			console.log(saveObj);
-
 			cms.savePage(saveObj, function (err) {
 				if (err) return cb(err);
 
-				if (res.globalData.urlParsed.query.uuid !== undefined) {
+				if (res.globalData.urlParsed.query.uuid === undefined) {
 					req.session.data.nextCallData	= {'global': {'messages': ['New page created with uuid ' + pageUuid]}};
 				} else {
 					req.session.data.nextCallData	= {'global': {'messages': ['Saved']}};
@@ -101,7 +99,7 @@ exports.run = function (req, res, cb) {
 	// Load data from database
 	else if (res.globalData.urlParsed.query.uuid !== undefined) {
 		tasks.push(function (cb) {
-			cms.getPages({'uuids': uuid}, function (err, rows) {
+			cms.getPages({'uuids': pageUuid}, function (err, rows) {
 				let	lang;
 
 				if (rows[0] !== undefined) {

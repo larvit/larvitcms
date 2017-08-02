@@ -1,15 +1,14 @@
 'use strict';
 
 const	async	= require('async'),
-	cms	= require('larvitcms'),
-	_	= require('lodash');
+	cms	= require('larvitcms');
 
 exports.run = function (req, res, cb) {
 	const	tasks	= [],
 		data	= {'global': res.globalData},
 		slug	= res.globalData.urlParsed.query.slug;
 
-	data.global.menuControllerName = 'adminCmsPages';
+	data.global.menuControllerName = 'adminCmsSnippets';
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
@@ -17,14 +16,20 @@ exports.run = function (req, res, cb) {
 
 	// Save a POSTed form
 	if (res.globalData.formFields.save !== undefined) {
+
 		tasks.push(function (cb) {
 			const	tasks	= [];
 
 			let	field;
 
+			if (res.globalData.formFields.slug === '') {
+				data.global.errors = ['Slug must be specified'];
+				return cb();
+			}
+
 			function addTask(lang, body) {
 				tasks.push(function (cb) {
-					cms.saveSnippet({'slug': _.trimEnd(slug, '/'), 'lang': lang, 'body': body}, cb);
+					cms.saveSnippet({'slug': res.globalData.formFields.slug, 'lang': lang, 'body': body}, cb);
 				});
 			}
 
@@ -35,32 +40,37 @@ exports.run = function (req, res, cb) {
 			}
 
 			async.parallel(tasks, function (err) {
+
 				if (err) {
 					data.global.errors = ['Unknown save error'];
 					return cb(err);
 				}
 
 				data.global.messages = ['Saved'];
+				res.statusCode	= 302;
+				res.setHeader('Location', '/adminCmsSnippetEdit?slug=' + res.globalData.formFields.slug + '&langs=' + (res.globalData.urlParsed.query.langs || 'en'));
 
 				cb();
 			});
 		});
 	}
 
-	// Load data from database
-	tasks.push(function (cb) {
-		cms.getSnippets({'slugs': slug}, function (err, snippets) {
-			let	lang;
+	if (slug !== undefined) {
+		// Load data from database
+		tasks.push(function (cb) {
+			cms.getSnippets({'slugs': slug}, function (err, snippets) {
+				let	lang;
 
-			if (snippets[0] !== undefined) {
-				for (lang in snippets[0].langs) {
-					res.globalData.formFields['body.' + lang] = snippets[0].langs[lang];
+				if (snippets[0] !== undefined) {
+					for (lang in snippets[0].langs) {
+						res.globalData.formFields['body.' + lang] = snippets[0].langs[lang];
+					}
 				}
-			}
 
-			cb();
+				cb();
+			});
 		});
-	});
+	}
 
 	async.series(tasks, function (err) {
 		cb(err, req, res, data);
