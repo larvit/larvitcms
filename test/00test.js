@@ -135,7 +135,7 @@ describe('Cms page CRUD test', function () {
 				},
 				'sv': {
 					'htmlTitle':	'sv_foobar2',
-					'slug':	'sv_bar2',
+					'slug':	'sv_ba??r2',
 					'body1':	'sv_lots of foo and bars2'
 				}
 			}
@@ -200,7 +200,7 @@ describe('Cms page CRUD test', function () {
 	});
 
 	it('Get page by slug', function (cb) {
-		cms.getPages({'slugs': 'svbar'}, function (err, pages) {
+		cms.getPages({'slugs': 'sv_bar'}, function (err, pages) {
 			assert.strictEqual(err,	null);
 			assert.strictEqual(pages.length,	1);
 			assert.strictEqual(pages[0].uuid,	cmsPage.uuid);
