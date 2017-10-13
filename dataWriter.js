@@ -5,6 +5,7 @@ const	EventEmitter	= require('events').EventEmitter,
 	topLogPrefix	= 'larvitcms: dataWriter.js: ',
 	DbMigration	= require('larvitdbmigration'),
 	Intercom	= require('larvitamintercom'),
+	checkKey	= require('check-object-key'),
 	slugify	= require('larvitslugify'),
 	lUtils	= require('larvitutils'),
 	amsync	= require('larvitamsync'),
@@ -35,8 +36,29 @@ function listenToQueue(retries, cb) {
 		retries = 0;
 	}
 
-	tasks.push(checkIntercom);
-	tasks.push(checkMode);
+	tasks.push(function (cb) {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'mode',
+			'validValues':	['master', 'slave', 'noSync'],
+			'default':	'noSync'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
+		});
+	});
+
+	tasks.push(function (cb) {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'intercom',
+			'default':	new Intercom('loopback interface'),
+			'defaultLabel':	'loopback interface'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
+		});
+	});
 
 	tasks.push(function (cb) {
 		if (exports.mode === 'master') {
@@ -92,66 +114,6 @@ function listenToQueue(retries, cb) {
 // by the application before listening commences
 setImmediate(listenToQueue);
 
-function checkIntercom(firstRun, cb) {
-	const	logPrefix	= topLogPrefix + 'checkIntercom() - ';
-
-	if (typeof firstRun === 'function') {
-		cb	= firstRun;
-		firstRun	= true;
-	} else if (firstRun === undefined) {
-		firstRun	= true;
-		cb	= function () {};
-	}
-
-	if (exports.intercom instanceof Intercom) {
-		log.debug(logPrefix + 'exports.intercom is set, no modification needed');
-	} else if (lUtils.instances.intercom instanceof Intercom) {
-		log.info(logPrefix + 'Using larvitutils.instances.intercom as Intercom');
-		exports.intercom	= lUtils.instances.intercom;
-	} else if (firstRun === false) {
-		log.warn(logPrefix + 'Neither exports.intercom nor larvitutils.instances.intercom is an instance of Intercom. Fallback to create our own loopback interface.');
-		exports.intercom	= new Intercom('loopback interface');
-	} else {
-		// Give the app 50ms to sort this shit out before we use the fallback fallback
-		setTimeout(function () {
-			checkIntercom(false, cb);
-		}, 50);
-		return;
-	}
-
-	cb();
-}
-
-function checkMode(firstRun, cb) {
-	const	logPrefix	= topLogPrefix + 'checkMode() - ';
-
-	if (typeof firstRun === 'function') {
-		cb	= firstRun;
-		firstRun	= true;
-	} else if (firstRun === undefined) {
-		firstRun	= true;
-		cb	= function () {};
-	}
-
-	if (exports.mode === 'slave' || exports.mode === 'master' || exports.mode === 'noSync') {
-		log.debug(logPrefix + 'exports.mode is set, no modification needed');
-	} else if (lUtils.instances.dataWriterMode !== undefined) {
-		log.info(logPrefix + 'Using larvitutils.instances.dataWriterMode as mode');
-		exports.mode	= lUtils.instances.dataWriterMode;
-	} else if (firstRun === false) {
-		log.warn(logPrefix + 'Neither exports.mode nor larvitutils.instances.dataWriterMode is set to a valid string. Falling back to noSync.');
-		exports.mode	= 'noSync';
-	} else {
-		// Give the app 50ms to sort this shit out before we use the fallback fallback
-		setTimeout(function () {
-			checkMode(false, cb);
-		}, 50);
-		return;
-	}
-
-	cb();
-}
-
 // This is ran before each incoming message on the queue is handeled
 function ready(retries, cb) {
 	const	logPrefix	= topLogPrefix + 'ready() - ',
@@ -179,14 +141,38 @@ function ready(retries, cb) {
 
 	readyInProgress = true;
 
-	tasks.push(checkIntercom);
-	tasks.push(checkMode);
+	tasks.push(function (cb) {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'mode',
+			'validValues':	['master', 'slave', 'noSync'],
+			'default':	'noSync'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
+		});
+	});
 
 	tasks.push(function (cb) {
-		if (exports.mode === 'both' || exports.mode === 'slave') {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'intercom',
+			'default':	new Intercom('loopback interface'),
+			'defaultLabel':	'loopback interface'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
+		});
+	});
+
+	tasks.push(function (cb) {
+		if (exports.mode === 'slave') {
 			log.verbose(logPrefix + 'exports.mode: "' + exports.mode + '", so read');
 
-			amsync.mariadb({'exchange': exports.exchangeName + '_dataDump'}, cb);
+			amsync.mariadb({
+				'exchange':	exports.exchangeName + '_dataDump',
+				'intercom':	exports.Intercom
+			}, cb);
 		} else {
 			cb();
 		}
@@ -219,7 +205,7 @@ function ready(retries, cb) {
 		isReady	= true;
 		eventEmitter.emit('ready');
 
-		if (exports.mode === 'both' || exports.mode === 'master') {
+		if (exports.mode === 'master') {
 			runDumpServer(cb);
 		} else {
 			cb();
@@ -259,6 +245,7 @@ function runDumpServer(cb) {
 	};
 
 	options['Content-Type'] = 'application/sql';
+	options.intercom	= exports.intercom;
 
 	new amsync.SyncServer(options, cb);
 }
