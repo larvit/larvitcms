@@ -159,7 +159,6 @@ function getPages(options, cb) {
  * @param func cb(err, slugs)
  */
 function getSnippets(options, cb) {
-
 	dataWriter.ready(function (err) {
 		const	dbFields	= [];
 
@@ -275,7 +274,7 @@ function savePage(data, cb) {
 	message.action	= 'savePage';
 	message.params	= {};
 
-	message.params.data = data;
+	message.params.data	= data;
 
 	dataWriter.intercom.send(message, options, function (err, msgUuid) {
 		if (err) return cb(err);
@@ -291,7 +290,7 @@ function saveSnippet(data, cb) {
 	message.action	= 'saveSnippet';
 	message.params	= {};
 
-	message.params.data = data;
+	message.params.data	= data;
 
 	dataWriter.intercom.send(message, options, function (err, msgUuid) {
 		if (err) return cb(err);

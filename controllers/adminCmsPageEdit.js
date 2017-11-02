@@ -32,16 +32,21 @@ exports.run = function (req, res, cb) {
 
 		// Save the data
 		tasks.push(function (cb) {
-			const	saveObj = { 'uuid': pageUuid, 'name': res.globalData.formFields.name, 'template': res.globalData.formFields.template, 'langs': {}};
+			const	saveObj	= {}
+
+			saveObj.uuid	= pageUuid;
+			saveObj.name	= res.globalData.formFields.name;
+			saveObj.template	= res.globalData.formFields.template;
+			saveObj.langs	= {};
 
 			let	fieldName,
 				field,
 				lang;
 
 			if (res.globalData.formFields.published) {
-				saveObj.published = true;
+				saveObj.published	= true;
 			} else {
-				saveObj.published = false;
+				saveObj.published	= false;
 			}
 
 			for (field in res.globalData.formFields) {
@@ -50,7 +55,7 @@ exports.run = function (req, res, cb) {
 					lang	= field.split('.')[1];
 
 					if (saveObj.langs[lang] === undefined) {
-						saveObj.langs[lang] = {};
+						saveObj.langs[lang]	= {};
 					}
 
 					if ( ! res.globalData.formFields[field]) {

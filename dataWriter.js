@@ -345,11 +345,11 @@ function savePage(params, deliveryTag, msgUuid) {
 	if (options.langs) {
 		for (lang in options.langs) {
 			if (options.langs[lang].slug) {
-				options.langs[lang].slug = slugify(options.langs[lang].slug, {'save': '_'});
+				options.langs[lang].slug = slugify(options.langs[lang].slug, {'save': ['_', '/']});
 			}
 
 			if ( ! options.langs[lang].slug) {
-				options.langs[lang].slug = slugify(options.langs[lang].htmlTitle, {'save': '_'});
+				options.langs[lang].slug = slugify(options.langs[lang].htmlTitle, {'save': ['_', '/']});
 			}
 
 			if ( ! options.langs[lang].htmlTitle)	options.langs[lang].htmlTitle	= '';
