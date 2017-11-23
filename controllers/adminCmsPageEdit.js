@@ -32,7 +32,7 @@ exports.run = function (req, res, cb) {
 
 		// Save the data
 		tasks.push(function (cb) {
-			const	saveObj	= {}
+			const	saveObj	= {};
 
 			saveObj.uuid	= pageUuid;
 			saveObj.name	= res.globalData.formFields.name;
