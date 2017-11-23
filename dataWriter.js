@@ -4,6 +4,8 @@ const	EventEmitter	= require('events').EventEmitter,
 	eventEmitter	= new EventEmitter(),
 	topLogPrefix	= 'larvitcms: dataWriter.js: ',
 	DbMigration	= require('larvitdbmigration'),
+	Intercom	= require('larvitamintercom'),
+	checkKey	= require('check-object-key'),
 	slugify	= require('larvitslugify'),
 	lUtils	= require('larvitutils'),
 	amsync	= require('larvitamsync'),
@@ -12,12 +14,12 @@ const	EventEmitter	= require('events').EventEmitter,
 	db	= require('larvitdb');
 
 let	readyInProgress	= false,
-	isReady	= false,
-	intercom;
+	isReady	= false;
 
 function listenToQueue(retries, cb) {
 	const	logPrefix	= topLogPrefix + 'listenToQueue() - ',
-		options	= {'exchange': exports.exchangeName};
+		options	= {'exchange': exports.exchangeName},
+		tasks	= [];
 
 	let	listenMethod;
 
@@ -34,42 +36,56 @@ function listenToQueue(retries, cb) {
 		retries = 0;
 	}
 
-	if (exports.mode === 'master') {
-		listenMethod	= 'consume';
-		options.exclusive	= true;	// It is important no other client tries to sneak
-		// out messages from us, and we want "consume"
-		// since we want the queue to persist even if this
-		// minion goes offline.
-	} else if (exports.mode === 'slave' || exports.mode === 'noSync') {
-		listenMethod = 'subscribe';
-	} else {
-		const	err	= new Error('Invalid exports.mode. Must be either "master", "slave" or "noSync"');
-		log.error(logPrefix + err.message);
-		return cb(err);
-	}
+	tasks.push(function (cb) {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'mode',
+			'validValues':	['master', 'slave', 'noSync'],
+			'default':	'noSync'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
+		});
+	});
 
-	intercom	= lUtils.instances.intercom;
+	tasks.push(function (cb) {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'intercom',
+			'default':	new Intercom('loopback interface'),
+			'defaultLabel':	'loopback interface'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
+		});
+	});
 
-	if ( ! (intercom instanceof require('larvitamintercom')) && retries < 500) {
-		retries ++;
-		setTimeout(function () {
-			listenToQueue(retries, cb);
-		}, 50);
-		return;
-	} else if ( ! (intercom instanceof require('larvitamintercom'))) {
-		log.error(logPrefix + 'Intercom is not set!');
-		return;
-	}
-
-	log.info(logPrefix + 'listenMethod: ' + listenMethod);
-
-	intercom.ready(function (err) {
-		if (err) {
-			log.error(logPrefix + 'intercom.ready() err: ' + err.message);
-			return;
+	tasks.push(function (cb) {
+		if (exports.mode === 'master') {
+			listenMethod	= 'consume';
+			options.exclusive	= true;	// It is important no other client tries to sneak
+			// out messages from us, and we want "consume"
+			// since we want the queue to persist even if this
+			// minion goes offline.
+		} else if (exports.mode === 'slave' || exports.mode === 'noSync') {
+			listenMethod = 'subscribe';
+		} else {
+			const	err	= new Error('Invalid exports.mode. Must be either "master", "slave" or "noSync"');
+			log.error(logPrefix + err.message);
+			return cb(err);
 		}
 
-		intercom[listenMethod](options, function (message, ack, deliveryTag) {
+		log.info(logPrefix + 'listenMethod: ' + listenMethod);
+
+		cb();
+	});
+
+	tasks.push(function (cb) {
+		exports.intercom.ready(cb);
+	});
+
+	tasks.push(function (cb) {
+		exports.intercom[listenMethod](options, function (message, ack, deliveryTag) {
 			exports.ready(function (err) {
 				ack(err); // Ack first, if something goes wrong we log it and handle it manually
 
@@ -89,8 +105,10 @@ function listenToQueue(retries, cb) {
 					log.warn(logPrefix + 'intercom.' + listenMethod + '() - Unknown message.action received: "' + message.action + '"');
 				}
 			});
-		}, ready);
+		}, cb);
 	});
+
+	async.series(tasks, cb);
 }
 // Run listenToQueue as soon as all I/O is done, this makes sure the exports.mode can be set
 // by the application before listening commences
@@ -121,28 +139,44 @@ function ready(retries, cb) {
 		return;
 	}
 
-	intercom	= require('larvitutils').instances.intercom;
-
-	if ( ! (intercom instanceof require('larvitamintercom')) && retries < 10) {
-		retries ++;
-		setTimeout(function () {
-			ready(retries, cb);
-		}, 50);
-		return;
-	} else if ( ! (intercom instanceof require('larvitamintercom'))) {
-		log.error(logPrefix + 'Intercom is not set!');
-		return;
-	}
-
 	readyInProgress = true;
 
-	if (exports.mode === 'both' || exports.mode === 'slave') {
-		log.verbose(logPrefix + 'exports.mode: "' + exports.mode + '", so read');
-
-		tasks.push(function (cb) {
-			amsync.mariadb({'exchange': exports.exchangeName + '_dataDump'}, cb);
+	tasks.push(function (cb) {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'mode',
+			'validValues':	['master', 'slave', 'noSync'],
+			'default':	'noSync'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
 		});
-	}
+	});
+
+	tasks.push(function (cb) {
+		checkKey({
+			'obj':	exports,
+			'objectKey':	'intercom',
+			'default':	new Intercom('loopback interface'),
+			'defaultLabel':	'loopback interface'
+		}, function (err, warning) {
+			if (warning) log.warn(logPrefix + warning);
+			cb(err);
+		});
+	});
+
+	tasks.push(function (cb) {
+		if (exports.mode === 'slave') {
+			log.verbose(logPrefix + 'exports.mode: "' + exports.mode + '", so read');
+
+			amsync.mariadb({
+				'exchange':	exports.exchangeName + '_dataDump',
+				'intercom':	exports.intercom
+			}, cb);
+		} else {
+			cb();
+		}
+	});
 
 	// Migrate database
 	tasks.push(function (cb) {
@@ -171,7 +205,7 @@ function ready(retries, cb) {
 		isReady	= true;
 		eventEmitter.emit('ready');
 
-		if (exports.mode === 'both' || exports.mode === 'master') {
+		if (exports.mode === 'master') {
 			runDumpServer(cb);
 		} else {
 			cb();
@@ -211,6 +245,7 @@ function runDumpServer(cb) {
 	};
 
 	options['Content-Type'] = 'application/sql';
+	options.intercom	= exports.intercom;
 
 	new amsync.SyncServer(options, cb);
 }
@@ -310,11 +345,11 @@ function savePage(params, deliveryTag, msgUuid) {
 	if (options.langs) {
 		for (lang in options.langs) {
 			if (options.langs[lang].slug) {
-				options.langs[lang].slug = slugify(options.langs[lang].slug, {'save': '_'});
+				options.langs[lang].slug = slugify(options.langs[lang].slug, {'save': ['_', '/']});
 			}
 
 			if ( ! options.langs[lang].slug) {
-				options.langs[lang].slug = slugify(options.langs[lang].htmlTitle, {'save': '_'});
+				options.langs[lang].slug = slugify(options.langs[lang].htmlTitle, {'save': ['_', '/']});
 			}
 
 			if ( ! options.langs[lang].htmlTitle)	options.langs[lang].htmlTitle	= '';

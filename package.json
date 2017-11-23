@@ -1,6 +1,6 @@
 {
   "name": "larvitcms",
-  "version": "0.5.2",
+  "version": "0.7.3",
   "description": "Simple blog module with admin GUI for larvitadmingui",
   "author": {
     "name": "Mikael 'Lilleman' Göransson",
@@ -10,24 +10,25 @@
   "private": false,
   "dependencies": {
     "async": "^2.5.0",
+    "check-object-key": "^0.1.2",
+    "larvitamintercom": "^0.2.5",
+    "larvitamsync": "^0.5.1",
     "larvitdb": "^1.3.1",
     "larvitdbmigration": "^2.0.5",
     "larvitfs": "^1.0.1",
     "larvitslugify": "^0.11.2",
     "larvitutils": "^1.1.1",
-    "larvitamsync": "^0.3.2",
-    "larvitamintercom": "^0.2.5",
     "lodash": "^4.17.4",
     "randomstring": "^1.1.5",
-    "winston": "^2.3.1",
-    "uuid": "^3.1.0"
+    "uuid": "^3.1.0",
+    "winston": "^2.3.1"
   },
   "devDependencies": {
     "larvitruncmd": "github:larvit/larvitruncmd",
-    "mocha": "^3.2.0",
+    "mocha": "^4.0.1",
     "mocha-eslint": "^4.1.0",
     "request": "^2.79.0",
-    "validator": "^8.0.0",
+    "validator": "^9.0.0",
     "wait-for-port": "0.0.2"
   },
   "keywords": [

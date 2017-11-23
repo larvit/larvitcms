@@ -20,7 +20,6 @@ const	topLogPrefix	= 'larvitcms: ./cms.js: ',
  * @param func cb - callback(err, pages)
  */
 function getPages(options, cb) {
-
 	dataWriter.ready(function (err) {
 		const	logPrefix	= topLogPrefix + 'getPages() - ',
 			tmpPages	= {},
@@ -160,7 +159,6 @@ function getPages(options, cb) {
  * @param func cb(err, slugs)
  */
 function getSnippets(options, cb) {
-
 	dataWriter.ready(function (err) {
 		const	dbFields	= [];
 
@@ -243,7 +241,7 @@ function rmPage(uuid, cb) {
 
 	message.params.data	= {'uuid': uuid};
 
-	lUtils.instances.intercom.send(message, options, function (err, msgUuid) {
+	dataWriter.intercom.send(message, options, function (err, msgUuid) {
 		if (err) return cb(err);
 
 		dataWriter.emitter.once(msgUuid, cb);
@@ -276,9 +274,9 @@ function savePage(data, cb) {
 	message.action	= 'savePage';
 	message.params	= {};
 
-	message.params.data = data;
+	message.params.data	= data;
 
-	lUtils.instances.intercom.send(message, options, function (err, msgUuid) {
+	dataWriter.intercom.send(message, options, function (err, msgUuid) {
 		if (err) return cb(err);
 
 		dataWriter.emitter.once(msgUuid, cb);
@@ -292,9 +290,9 @@ function saveSnippet(data, cb) {
 	message.action	= 'saveSnippet';
 	message.params	= {};
 
-	message.params.data = data;
+	message.params.data	= data;
 
-	lUtils.instances.intercom.send(message, options, function (err, msgUuid) {
+	dataWriter.intercom.send(message, options, function (err, msgUuid) {
 		if (err) return cb(err);
 
 		dataWriter.emitter.once(msgUuid, cb);
