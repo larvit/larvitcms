@@ -9,7 +9,10 @@ exports.run = function (req, res, cb) {
 		data	= {'global': res.globalData},
 		slug	= res.globalData.urlParsed.query.slug || slugify(res.globalData.formFields.slug);
 
-	data.global.menuControllerName = 'adminCmsSnippets';
+	data.global.menuControllerName	= 'adminCmsSnippets';
+	data.global.messages	= [];
+	data.global.errors	= [];
+
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
@@ -24,8 +27,18 @@ exports.run = function (req, res, cb) {
 			let	field;
 
 			if (res.globalData.formFields.slug === '') {
-				data.global.errors = ['Slug must be specified'];
+				data.global.errors.push('Slug must be specified');
 				return cb();
+			}
+
+			if (res.globalData.urlParsed.query.slug === undefined) {
+				tasks.push(function (cb) {
+					cms.getSnippets({'slugs': res.globalData.formFields.slug}, function (err, result) {
+						if (err) return cb(err);
+						if (result.length > 0) err = new Error('Snippet already exists');
+						return cb(err);
+					});
+				});
 			}
 
 			function addTask(lang, body) {
@@ -40,17 +53,15 @@ exports.run = function (req, res, cb) {
 				}
 			}
 
-			async.parallel(tasks, function (err) {
-
+			async.series(tasks, function (err) {
 				if (err) {
-					data.global.errors = ['Unknown save error'];
-					return cb(err);
+					data.global.errors.push('Save error: ' + err.message);
+					return cb();
 				}
 
-				data.global.messages = ['Saved'];
 				res.statusCode	= 302;
+				req.session.data.nextCallData	= {'global': {'messages': ['Saved']}};
 				res.setHeader('Location', '/adminCmsSnippetEdit?slug=' + res.globalData.formFields.slug + '&langs=' + (res.globalData.urlParsed.query.langs || 'en'));
-
 				cb();
 			});
 		});
