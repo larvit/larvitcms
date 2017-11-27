@@ -302,6 +302,7 @@ function saveSnippet(data, cb) {
 exports.dataWriter	= dataWriter;
 exports.getPages	= getPages;
 exports.getSnippets	= getSnippets;
+exports.options	= dataWriter.options;
 exports.rmPage	= rmPage;
 exports.savePage	= savePage;
 exports.saveSnippet	= saveSnippet;
