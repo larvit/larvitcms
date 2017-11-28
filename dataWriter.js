@@ -390,12 +390,12 @@ function savePage(params, deliveryTag, msgUuid) {
 function saveSnippet(params, deliveryTag, msgUuid) {
 	const	logPrefix	= topLogPrefix + 'saveSnippet() - ',
 		options	= params.data,
-		sql	= 'REPLACE INTO cms_snippets (body, slug, lang) VALUES(?,?,?);',
-		dbFields	= [options.body, options.slug, options.lang],
+		sql	= 'REPLACE INTO cms_snippets (body, name, lang) VALUES(?,?,?);',
+		dbFields	= [options.body, options.name, options.lang],
 		tasks	= [];
 
-	if (options.slug === undefined) {
-		const	err	= new Error('slug not provided');
+	if (options.name === undefined) {
+		const	err	= new Error('Name not provided');
 		log.warn(logPrefix + err.message);
 		return exports.emitter.emit(msgUuid, err);
 	}

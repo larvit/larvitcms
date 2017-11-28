@@ -13,13 +13,13 @@ const	Intercom	= require('larvitamintercom'),
 let	cmsLib;
 
 // Set up winston
-log.remove(log.transports.Console);
-/**/log.add(log.transports.Console, {
-	'level':	'warn',
-	'colorize':	true,
-	'timestamp':	true,
-	'json':	false
-});/**/
+//log.remove(log.transports.Console);
+///**/log.add(log.transports.Console, {
+//	'level':	'warn',
+//	'colorize':	true,
+//	'timestamp':	true,
+//	'json':	false
+//});/**/
 
 before(function (done) {
 	const	tasks	= [];
@@ -272,12 +272,12 @@ describe('Cms page CRUD test', function () {
 describe('Snippets CRUD', function () {
 	const	snippet1	= {
 			'body':	'body 1 en',
-			'slug':	slugify('body 1 en'),
+			'name':	slugify('body 1 en'),
 			'lang':	'en'
 		},
 		snippet2	= {
 			'body': 'body 2 sv',
-			'slug': slugify('body 2 sv'),
+			'name': slugify('body 2 sv'),
 			'lang': 'sv'
 		};
 
@@ -303,8 +303,8 @@ describe('Snippets CRUD', function () {
 		async.series(tasks, cb);
 	});
 
-	it('Get snippet by slug', function (cb) {
-		cmsLib.getSnippets({'slugs': slugify('body 1 en')}, function (err, snippets) {
+	it('Get snippet by name', function (cb) {
+		cmsLib.getSnippets({'names': slugify('body 1 en')}, function (err, snippets) {
 			assert.strictEqual(err,	null);
 			assert.strictEqual(snippets.length,	1);
 			assert.strictEqual(snippets[0].langs.en,	'body 1 en');

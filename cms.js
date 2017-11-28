@@ -155,8 +155,8 @@ function getPages(options, cb) {
 /**
  * Get snippets
  *
- * @param obj options - slugs....
- * @param func cb(err, slugs)
+ * @param obj options - names....
+ * @param func cb(err, names)
  */
 function getSnippets(options, cb) {
 	dataWriter.ready(function (err) {
@@ -171,8 +171,8 @@ function getSnippets(options, cb) {
 			options	= {};
 		}
 
-		if (options.onlySlugs) {
-			sql = 'SELECT DISTINCT slug FROM cms_snippets ORDER BY slug;';
+		if (options.onlyNames) {
+			sql = 'SELECT DISTINCT name FROM cms_snippets ORDER BY name;';
 			db.query(sql, cb);
 			return;
 		}
@@ -180,45 +180,45 @@ function getSnippets(options, cb) {
 		sql	= 'SELECT * FROM cms_snippets\n';
 		sql	+= 'WHERE 1 + 1\n';
 
-		if (options.slugs !== undefined) {
-			if (typeof options.slugs === 'string') {
-				options.slugs = [options.slugs];
+		if (options.names !== undefined) {
+			if (typeof options.names === 'string') {
+				options.names = [options.names];
 			}
 
-			if (options.slugs.length === 0) {
-				options.slugs = [''];
+			if (options.names.length === 0) {
+				options.names = [''];
 			}
 
-			sql += '	AND slug IN (';
+			sql += '	AND name IN (';
 
-			for (let i = 0; options.slugs[i] !== undefined; i ++) {
+			for (let i = 0; options.names[i] !== undefined; i ++) {
 				sql += '?,';
-				dbFields.push(options.slugs[i]);
+				dbFields.push(options.names[i]);
 			}
 
 			sql = sql.substring(0, sql.length - 1) + ')\n';
 		}
 
-		sql += 'ORDER BY slug, lang';
+		sql += 'ORDER BY name, lang';
 
 		db.query(sql, dbFields, function (err, rows) {
 			const	snippets	= [];
 
 			let	snippet,
-				prevSlug;
+				prevName;
 
 			if (err) return cb(err);
 
 			for (let i = 0; rows[i] !== undefined; i ++) {
-				if (prevSlug !== rows[i].slug) {
+				if (prevName !== rows[i].name) {
 					if (snippet) {
 						snippets.push(snippet);
 					}
 
-					snippet	= {'slug': rows[i].slug, 'langs': {}};
+					snippet	= {'name': rows[i].name, 'langs': {}};
 				}
 
-				prevSlug	= rows[i].slug;
+				prevName	= rows[i].name;
 				snippet.langs[rows[i].lang]	= rows[i].body;
 			}
 
