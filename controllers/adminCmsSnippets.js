@@ -15,7 +15,7 @@ exports.run = function (req, res, cb) {
 		data.global.langs = res.langs;
 	}
 
-	cms.getSnippets({'onlySlugs': true}, function (err, snippets) {
+	cms.getSnippets({'onlyNames': true}, function (err, snippets) {
 		data.cmsSnippets = snippets;
 		cb(null, req, res, data);
 	});

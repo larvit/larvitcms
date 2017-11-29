@@ -7,7 +7,7 @@ const	slugify	= require('larvitslugify'),
 exports.run = function (req, res, cb) {
 	const	tasks	= [],
 		data	= {'global': res.globalData},
-		slug	= res.globalData.urlParsed.query.slug || slugify(res.globalData.formFields.slug);
+		name	= res.globalData.urlParsed.query.name || slugify(res.globalData.formFields.name);
 
 	data.global.menuControllerName	= 'adminCmsSnippets';
 	data.global.messages	= [];
@@ -26,14 +26,14 @@ exports.run = function (req, res, cb) {
 
 			let	field;
 
-			if (res.globalData.formFields.slug === '') {
-				data.global.errors.push('Slug must be specified');
+			if (res.globalData.formFields.name === '') {
+				data.global.errors.push('Name must be specified');
 				return cb();
 			}
 
-			if (res.globalData.urlParsed.query.slug === undefined) {
+			if (res.globalData.urlParsed.query.name === undefined) {
 				tasks.push(function (cb) {
-					cms.getSnippets({'slugs': res.globalData.formFields.slug}, function (err, result) {
+					cms.getSnippets({'names': res.globalData.formFields.name}, function (err, result) {
 						if (err) return cb(err);
 						if (result.length > 0) err = new Error('Snippet already exists');
 						return cb(err);
@@ -43,7 +43,7 @@ exports.run = function (req, res, cb) {
 
 			function addTask(lang, body) {
 				tasks.push(function (cb) {
-					cms.saveSnippet({'slug': res.globalData.formFields.slug, 'lang': lang, 'body': body}, cb);
+					cms.saveSnippet({'name': res.globalData.formFields.name, 'lang': lang, 'body': body}, cb);
 				});
 			}
 
@@ -61,16 +61,16 @@ exports.run = function (req, res, cb) {
 
 				res.statusCode	= 302;
 				req.session.data.nextCallData	= {'global': {'messages': ['Saved']}};
-				res.setHeader('Location', '/adminCmsSnippetEdit?slug=' + res.globalData.formFields.slug + '&langs=' + (res.globalData.urlParsed.query.langs || 'en'));
+				res.setHeader('Location', '/adminCmsSnippetEdit?name=' + res.globalData.formFields.name + '&langs=' + (res.globalData.urlParsed.query.langs || 'en'));
 				cb();
 			});
 		});
 	}
 
-	if (slug !== undefined) {
+	if (name !== undefined) {
 		// Load data from database
 		tasks.push(function (cb) {
-			cms.getSnippets({'slugs': slug}, function (err, snippets) {
+			cms.getSnippets({'names': name}, function (err, snippets) {
 				let	lang;
 
 				if (snippets[0] !== undefined) {
