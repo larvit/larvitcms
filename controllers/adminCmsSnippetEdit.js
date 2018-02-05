@@ -68,20 +68,32 @@ exports.run = function (req, res, cb) {
 	}
 
 	if (name !== undefined) {
-		// Load data from database
-		tasks.push(function (cb) {
-			cms.getSnippets({'names': name}, function (err, snippets) {
-				let	lang;
-
-				if (snippets[0] !== undefined) {
-					for (lang in snippets[0].langs) {
-						res.globalData.formFields['body.' + lang] = snippets[0].langs[lang];
-					}
-				}
-
-				cb();
+		if (res.globalData.formFields.delete === 'delete') {
+			tasks.push(function (cb) {
+				cms.rmSnippet(name, function (err) {
+					if (err) return cb(err);
+					res.statusCode = 302;
+					req.session.data.nextCallData	= {'global': {'messages': ['Successfully removed snippet']}};
+					res.setHeader('Location', '/adminCmsSnippets');
+					cb();
+				});
 			});
-		});
+		} else {
+			// Load data from database
+			tasks.push(function (cb) {
+				cms.getSnippets({'names': name}, function (err, snippets) {
+					let	lang;
+
+					if (snippets[0] !== undefined) {
+						for (lang in snippets[0].langs) {
+							res.globalData.formFields['body.' + lang] = snippets[0].langs[lang];
+						}
+					}
+
+					cb();
+				});
+			});
+		}
 	}
 
 	async.series(tasks, function (err) {
