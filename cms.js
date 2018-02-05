@@ -248,6 +248,22 @@ function rmPage(uuid, cb) {
 	});
 }
 
+function rmSnippet(name, cb) {
+	const	options	= {'exchange': dataWriter.exchangeName},
+		message	= {};
+
+	message.action	= 'rmSnippet';
+	message.params	= {};
+
+	message.params.data	= {'name': name};
+
+	dataWriter.intercom.send(message, options, function (err, msgUuid) {
+		if (err) return cb(err);
+
+		dataWriter.emitter.once(msgUuid, cb);
+	});
+}
+
 /**
  * Save a page
  *
@@ -304,5 +320,6 @@ exports.getPages	= getPages;
 exports.getSnippets	= getSnippets;
 exports.options	= dataWriter.options;
 exports.rmPage	= rmPage;
+exports.rmSnippet	= rmSnippet;
 exports.savePage	= savePage;
 exports.saveSnippet	= saveSnippet;

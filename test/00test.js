@@ -311,4 +311,16 @@ describe('Snippets CRUD', function () {
 			cb();
 		});
 	});
+
+	it('Remove snippet by name', function (cb) {
+		cmsLib.rmSnippet(slugify('body 1 en'), function (err) {
+			if (err) throw err;
+
+			cmsLib.getSnippets({'names': slugify('body 1 en')}, function (err, snippets) {
+				assert.strictEqual(err,	null);
+				assert.strictEqual(snippets.length,	0);
+				cb();
+			});
+		});
+	});
 });

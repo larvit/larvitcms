@@ -293,6 +293,28 @@ function rmPage(params, deliveryTag, msgUuid) {
 	});
 }
 
+function rmSnippet(params, deliveryTag, msgUuid) {
+	const	logPrefix	= topLogPrefix + 'rmSnippet() - ',
+		options	= params.data,
+		tasks	= [];
+
+	if ( ! options.name) {
+		const	err	= new Error('snippet name not provided');
+		log.warn(logPrefix + err.message);
+		return exports.emitter.emit(msgUuid, err);
+	}
+
+	tasks.push(ready);
+
+	tasks.push(function (cb) {
+		db.query('DELETE FROM cms_snippets WHERE name = ?', [options.name], cb);
+	});
+
+	async.series(tasks, function (err) {
+		exports.emitter.emit(msgUuid, err);
+	});
+}
+
 function savePage(params, deliveryTag, msgUuid) {
 	const	logPrefix	= topLogPrefix + 'savePage() - ',
 		options	= params.data,
@@ -414,5 +436,6 @@ exports.exchangeName	= 'larvitcms';
 exports.options	= undefined;
 exports.ready	= ready;
 exports.rmPage	= rmPage;
+exports.rmSnippet	= rmSnippet;
 exports.savePage	= savePage;
 exports.saveSnippet	= saveSnippet;
