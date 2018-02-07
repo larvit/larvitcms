@@ -270,10 +270,17 @@ function runDumpServer(cb) {
 function rmPage(params, deliveryTag, msgUuid) {
 	const	logPrefix	= topLogPrefix + 'rmPage() - ',
 		options	= params.data,
+		uuidBuffer	= lUtils.uuidToBuffer(options.uuid),
 		tasks	= [];
 
-	if (options.uuid === 'undefined ') {
+	if (options.uuid === undefined) {
 		const	err	= new Error('pageUuid not provided');
+		log.warn(logPrefix + err.message);
+		return exports.emitter.emit(msgUuid, err);
+	}
+
+	if (uuidBuffer === false) {
+		const	err	= new Error('Inavlid pageUuid provided');
 		log.warn(logPrefix + err.message);
 		return exports.emitter.emit(msgUuid, err);
 	}
@@ -281,11 +288,11 @@ function rmPage(params, deliveryTag, msgUuid) {
 	tasks.push(ready);
 
 	tasks.push(function (cb) {
-		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
+		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [uuidBuffer], cb);
 	});
 
 	tasks.push(function (cb) {
-		db.query('DELETE FROM cms_pages WHERE uuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
+		db.query('DELETE FROM cms_pages WHERE uuid = ?', [uuidBuffer], cb);
 	});
 
 	async.series(tasks, function (err) {
@@ -318,12 +325,19 @@ function rmSnippet(params, deliveryTag, msgUuid) {
 function savePage(params, deliveryTag, msgUuid) {
 	const	logPrefix	= topLogPrefix + 'savePage() - ',
 		options	= params.data,
+		uuidBuffer	= lUtils.uuidToBuffer(options.uuid),
 		tasks	= [];
 
 	let	lang;
 
-	if (options.uuid === 'undefined ') {
+	if (options.uuid === undefined) {
 		const	err	= new Error('pageUuid not provided');
+		log.warn(logPrefix + err.message);
+		return exports.emitter.emit(msgUuid, err);
+	}
+
+	if (uuidBuffer === false) {
+		const	err	= new Error('Inavlid pageUuid provided');
 		log.warn(logPrefix + err.message);
 		return exports.emitter.emit(msgUuid, err);
 	}
@@ -333,15 +347,15 @@ function savePage(params, deliveryTag, msgUuid) {
 	tasks.push(ready);
 
 	tasks.push(function (cb) {
-		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
+		db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [uuidBuffer], cb);
 	});
 
 	tasks.push(function (cb) {
-		db.query('DELETE FROM cms_pages WHERE uuid = ?', [lUtils.uuidToBuffer(options.uuid)], cb);
+		db.query('DELETE FROM cms_pages WHERE uuid = ?', [uuidBuffer], cb);
 	});
 
 	tasks.push(function (cb) {
-		const	dbFields	= [lUtils.uuidToBuffer(options.uuid), options.name];
+		const	dbFields	= [uuidBuffer, options.name];
 
 		let	sql	= 'INSERT INTO cms_pages (uuid,name';
 
@@ -373,7 +387,7 @@ function savePage(params, deliveryTag, msgUuid) {
 	// We need to declare this outside the loop because of async operations
 	function addEntryData(lang, htmlTitle, body1, body2, body3, body4, body5, slug) {
 		tasks.push(function (cb) {
-			const	dbFields	= [lUtils.uuidToBuffer(options.uuid), lang, htmlTitle, body1, body2, body3, body4, body5, slug],
+			const	dbFields	= [uuidBuffer, lang, htmlTitle, body1, body2, body3, body4, body5, slug],
 				sql	= 'INSERT INTO cms_pagesData (pageUuid, lang, htmlTitle, body1, body2, body3, body4, body5, slug) VALUES(?,?,?,?,?,?,?,?,?);';
 
 			db.query(sql, dbFields, cb);

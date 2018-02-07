@@ -95,8 +95,16 @@ function getPages(options, cb) {
 			sql += '	AND p.uuid IN (';
 
 			for (let i = 0; options.uuids[i] !== undefined; i ++) {
+				const buffer = lUtils.uuidToBuffer(options.uuids[i]);
+
+				if (buffer === false) {
+					const e = new Error('Invalid page uuid supplied');
+					log.warn(logPrefix + e.message);
+					return cb(e);
+				}
+
 				sql += '?,';
-				dbFields.push(lUtils.uuidToBuffer(options.uuids[i]));
+				dbFields.push(buffer);
 			}
 
 			sql = sql.substring(0, sql.length - 1) + ')\n';
