@@ -103,10 +103,9 @@ exports.run = function (req, res, cb) {
 				cb();
 			});
 		});
-	}
 
 	// Load data from database
-	else if (res.globalData.urlParsed.query.uuid !== undefined) {
+	} else if (res.globalData.urlParsed.query.uuid !== undefined) {
 		tasks.push(function (cb) {
 			cms.getPages({'uuids': pageUuid}, function (err, rows) {
 				let	lang;
