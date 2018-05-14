@@ -1,6 +1,7 @@
 'use strict';
 
 const	async	= require('async'),
+	utils	= require('../models/utils.js'),
 	uuid	= require('uuid'),
 	lfs	= require('larvitfs'),
 	cms	= require('larvitcms'),
@@ -16,7 +17,10 @@ exports.run = function (req, res, cb) {
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
-	if ( ! res.adminRights) return cb(new Error('Invalid rights'), req, res, {});
+	if ( ! res.adminRights) {
+		utils.deny(res);
+		return cb(null, req, res, null);
+	}
 
 	// Save a POSTed form
 	if (res.globalData.formFields.save !== undefined) {
