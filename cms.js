@@ -1,53 +1,89 @@
+/* eslint-disable no-tabs */
 'use strict';
 
-const	topLogPrefix	= 'larvitcms: ./cms.js: ',
-	dataWriter	= require(__dirname + '/dataWriter.js'),
-	lUtils	= require('larvitutils'),
-	log	= require('winston'),
-	db	= require('larvitdb');
+const topLogPrefix = 'larvitcms: ./cms.js: ';
+const DataWriter = require(__dirname + '/dataWriter.js');
+const LUtils = require('larvitutils');
+const log = require('winston');
+const db = require('larvitdb');
 
-/**
- * Get pages
- *
- * @param obj options	-	{ // All options are optional!
- *			'langs':	['sv', 'en'],
- *			'slugs':	['blu', 'bla'],
- *			'ids':	[32,4],
- *			'published':	true,	// Or false, to get both, set to undefined
- *			'limit':	10,	// Defaults to 10, explicitly give false to remove limit
- *			'offset':	20
- *		}
- * @param func cb - callback(err, pages)
- */
-function getPages(options, cb) {
-	dataWriter.ready(function (err) {
-		const	logPrefix	= topLogPrefix + 'getPages() - ',
-			tmpPages	= {},
-			dbFields	= [],
-			pages	= [];
+class Cms {
+	constructor(options, cb) {
+		this.options = options || {};
 
-		let	sql;
+		if (!options.db) throw new Error('Missing required option "db"');
 
-		if (err) return cb(err);
+		if (!options.lUtils) options.lUtils = new LUtils();
 
-		if (typeof options === 'function') {
-			cb	= options;
-			options	= {};
+		if (!this.options.log) {
+			const lUtils = new LUtils();
+
+			this.options.log = new lUtils.Log();
 		}
 
-		log.debug(logPrefix + 'Called with options: "' + JSON.stringify(options) + '"');
+		this.log = this.options.log;
+
+		for (const key of Object.keys(this.options)) {
+			this[key] = this.options[key];
+		}
+
+		if (!this.exchangeName) {
+			this.exchangeName = 'larvitcms';
+		}
+
+		if (!this.mode) {
+			this.log.info(logPrefix + 'No "mode" option given, defaulting to "noSync"');
+			this.mode = 'noSync';
+		} else if (['noSync', 'master', 'slave'].indexOf(this.mode) === -1) {
+			const err = new Error('Invalid "mode" option given: "' + this.mode + '"');
+
+			this.log.error(logPrefix + err.message);
+			throw err;
+		}
+
+		if (!this.intercom) {
+			this.log.info(logPrefix + 'No "intercom" option given, defaulting to "loopback interface"');
+			this.intercom = new Intercom('loopback interface');
+		}
+
+		this.dataWriter = new DataWriter({
+			exchangeName: this.exchangeName,
+			intercom: this.intercom,
+			mode: this.mode,
+			log: this.log,
+			db: this.db,
+			amsync_host: this.options.amsync_host || null,
+			amsync_minPort: this.options.amsync_minPort || null,
+			amsync_maxPort: this.options.amsync_maxPort || null
+		}, cb);
+	};
+
+	getPages(options, cb) {
+		const logPrefix = topLogPrefix + 'getPages() - ';
+		const tmpPages = {};
+		const dbFields = [];
+		const pages = [];
+
+		let sql;
+
+		if (typeof options === 'function') {
+			cb = options;
+			options = {};
+		}
+
+		this.log.debug(logPrefix + 'Called with options: "' + JSON.stringify(options) + '"');
 
 		// Make sure options that should be arrays actually are arrays
 		// This will simplify our lives in the SQL builder below
-		if (options.langs !== undefined && ! (options.langs instanceof Array)) {
+		if (options.langs !== undefined && !(options.langs instanceof Array)) {
 			options.langs = [options.langs];
 		}
 
-		if (options.uuids !== undefined && ! (options.ids instanceof Array)) {
+		if (options.uuids !== undefined && !(options.ids instanceof Array)) {
 			options.uuids = [options.uuids];
 		}
 
-		if (options.slugs !== undefined && ! (options.slugs instanceof Array)) {
+		if (options.slugs !== undefined && !(options.slugs instanceof Array)) {
 			options.slugs = [options.slugs];
 		}
 
@@ -61,7 +97,7 @@ function getPages(options, cb) {
 			options.limit = 10;
 		}
 
-		sql  = 'SELECT pgd.*, p.*\n';
+		sql = 'SELECT pgd.*, p.*\n';
 		sql += 'FROM cms_pages p\n';
 		sql += '	LEFT JOIN cms_pagesData pgd ON pgd.pageUuid = p.uuid\n';
 		sql += 'WHERE 1 + 1\n';
@@ -70,7 +106,7 @@ function getPages(options, cb) {
 		if (options.langs !== undefined) {
 			sql += '	AND pgd.lang IN (';
 
-			for (let i = 0; options.langs[i] !== undefined; i ++) {
+			for (let i = 0; options.langs[i] !== undefined; i++) {
 				sql += '?,';
 				dbFields.push(options.langs[i]);
 			}
@@ -82,7 +118,7 @@ function getPages(options, cb) {
 		if (options.slugs !== undefined) {
 			sql += '	AND p.uuid IN (SELECT pageUuid FROM cms_pagesData WHERE slug IN (';
 
-			for (let i = 0; options.slugs[i] !== undefined; i ++) {
+			for (let i = 0; options.slugs[i] !== undefined; i++) {
 				sql += '?,';
 				dbFields.push(options.slugs[i]);
 			}
@@ -94,12 +130,14 @@ function getPages(options, cb) {
 		if (options.uuids !== undefined) {
 			sql += '	AND p.uuid IN (';
 
-			for (let i = 0; options.uuids[i] !== undefined; i ++) {
-				const buffer = lUtils.uuidToBuffer(options.uuids[i]);
+			for (let i = 0; options.uuids[i] !== undefined; i++) {
+				const buffer = this.lUtils.uuidToBuffer(options.uuids[i]);
 
 				if (buffer === false) {
 					const e = new Error('Invalid page uuid supplied');
+
 					log.warn(logPrefix + e.message);
+
 					return cb(e);
 				}
 
@@ -119,35 +157,37 @@ function getPages(options, cb) {
 		sql += 'ORDER BY p.published DESC, p.name\n';
 
 		if (options.limit !== false) {
-			sql += 'LIMIT ' + parseInt(options.limit) + '\n';
+			sql += 'LIMIT ' + Number(options.limit) + '\n';
 
 			if (options.offset !== undefined) {
-				sql += ' OFFSET ' + parseInt(options.offset);
+				sql += ' OFFSET ' + Number(options.offset);
 			}
 		}
 
-		db.query(sql, dbFields, function (err, rows) {
-			for (let i = 0; rows[i] !== undefined; i ++) {
-				const	uuid	= lUtils.formatUuid(rows[i].uuid);
+		this.db.query(sql, dbFields, (err, rows) => {
+			if (err) return cb(err);
+
+			for (let i = 0; rows[i] !== undefined; i++) {
+				const uuid = this.lUtils.formatUuid(rows[i].uuid);
 
 				if (tmpPages[uuid] === undefined) {
 					tmpPages[uuid] = {
-						'uuid':	uuid,
-						'name':	rows[i].name,
-						'published':	Boolean(rows[i].published),
-						'template':	rows[i].template,
-						'langs':	{}
+						uuid: uuid,
+						name: rows[i].name,
+						published: Boolean(rows[i].published),
+						template: rows[i].template,
+						langs: {}
 					};
 				}
 
 				tmpPages[uuid].langs[rows[i].lang] = {
-					'htmlTitle':	rows[i].htmlTitle,
-					'body1':	rows[i].body1,
-					'body2':	rows[i].body2,
-					'body3':	rows[i].body3,
-					'body4':	rows[i].body4,
-					'body5':	rows[i].body5,
-					'slug':	rows[i].slug
+					htmlTitle: rows[i].htmlTitle,
+					body1: rows[i].body1,
+					body2: rows[i].body2,
+					body3: rows[i].body3,
+					body4: rows[i].body4,
+					body5: rows[i].body5,
+					slug: rows[i].slug
 				};
 			}
 
@@ -157,36 +197,26 @@ function getPages(options, cb) {
 
 			cb(null, pages);
 		});
-	});
-};
+	};
 
-/**
- * Get snippets
- *
- * @param obj options - names....
- * @param func cb(err, names)
- */
-function getSnippets(options, cb) {
-	dataWriter.ready(function (err) {
-		const	dbFields	= [];
-
-		let	sql;
-
-		if (err) return cb(err);
+	getSnippets(options, cb) {
+		const dbFields = [];
+		let sql;
 
 		if (typeof options === 'function') {
-			cb	= options;
-			options	= {};
+			cb = options;
+			options = {};
 		}
 
 		if (options.onlyNames) {
 			sql = 'SELECT DISTINCT name FROM cms_snippets ORDER BY name;';
 			db.query(sql, cb);
+
 			return;
 		}
 
-		sql	= 'SELECT * FROM cms_snippets\n';
-		sql	+= 'WHERE 1 + 1\n';
+		sql = 'SELECT * FROM cms_snippets\n';
+		sql += 'WHERE 1 + 1\n';
 
 		if (options.names !== undefined) {
 			if (typeof options.names === 'string') {
@@ -199,7 +229,7 @@ function getSnippets(options, cb) {
 
 			sql += '	AND name IN (';
 
-			for (let i = 0; options.names[i] !== undefined; i ++) {
+			for (let i = 0; options.names[i] !== undefined; i++) {
 				sql += '?,';
 				dbFields.push(options.names[i]);
 			}
@@ -209,25 +239,25 @@ function getSnippets(options, cb) {
 
 		sql += 'ORDER BY name, lang';
 
-		db.query(sql, dbFields, function (err, rows) {
-			const	snippets	= [];
+		this.db.query(sql, dbFields, (err, rows) => {
+			const snippets = [];
 
-			let	snippet,
-				prevName;
+			let snippet;
+			let prevName;
 
 			if (err) return cb(err);
 
-			for (let i = 0; rows[i] !== undefined; i ++) {
+			for (let i = 0; rows[i] !== undefined; i++) {
 				if (prevName !== rows[i].name) {
 					if (snippet) {
 						snippets.push(snippet);
 					}
 
-					snippet	= {'name': rows[i].name, 'langs': {}};
+					snippet = {name: rows[i].name, langs: {}};
 				}
 
-				prevName	= rows[i].name;
-				snippet.langs[rows[i].lang]	= rows[i].body;
+				prevName = rows[i].name;
+				snippet.langs[rows[i].lang] = rows[i].body;
 			}
 
 			// Add the last one
@@ -237,97 +267,71 @@ function getSnippets(options, cb) {
 
 			cb(null, snippets);
 		});
-	});
+	}
+
+	rmPage(uuid, cb) {
+		const options = {exchange: this.exchangeName};
+		const message = {};
+
+		message.action = 'rmPage';
+		message.params = {};
+
+		message.params.data = {uuid: uuid};
+
+		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
+			if (err) return cb(err);
+
+			this.dataWriter.emitter.once(msgUuid, cb);
+		});
+	}
+
+	rmSnippet(name, cb) {
+		const options = {exchange: this.exchangeName};
+		const message = {};
+
+		message.action = 'rmSnippet';
+		message.params = {};
+
+		message.params.data = {name: name};
+
+		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
+			if (err) return cb(err);
+
+			this.dataWriter.emitter.once(msgUuid, cb);
+		});
+	}
+
+	savePage(data, cb) {
+		const options = {exchange: this.exchangeName};
+		const message = {};
+
+		message.action = 'savePage';
+		message.params = {};
+
+		message.params.data = data;
+
+		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
+			if (err) return cb(err);
+
+			this.dataWriter.emitter.once(msgUuid, cb);
+		});
+	};
+
+	saveSnippet(data, cb) {
+		const options = {exchange: this.exchangeName};
+		const message = {};
+
+		message.action = 'saveSnippet';
+		message.params = {};
+
+		message.params.data = data;
+
+		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
+			if (err) return cb(err);
+
+			this.dataWriter.emitter.once(msgUuid, cb);
+		});
+	}
 }
 
-function rmPage(uuid, cb) {
-	const	options	= {'exchange': dataWriter.exchangeName},
-		message	= {};
-
-	message.action	= 'rmPage';
-	message.params	= {};
-
-	message.params.data	= {'uuid': uuid};
-
-	dataWriter.intercom.send(message, options, function (err, msgUuid) {
-		if (err) return cb(err);
-
-		dataWriter.emitter.once(msgUuid, cb);
-	});
-}
-
-function rmSnippet(name, cb) {
-	const	options	= {'exchange': dataWriter.exchangeName},
-		message	= {};
-
-	message.action	= 'rmSnippet';
-	message.params	= {};
-
-	message.params.data	= {'name': name};
-
-	dataWriter.intercom.send(message, options, function (err, msgUuid) {
-		if (err) return cb(err);
-
-		dataWriter.emitter.once(msgUuid, cb);
-	});
-}
-
-/**
- * Save a page
- *
- * @param obj data	-	{ // All options EXCEPT name are optional!
- *			'id':	1323,
- *			'name':	'barfoo'
- *			'published':	dateObj,
- *			'template':	str, // Defaults to "default"
- *			'langs': {
- *				'en': {
- *					'htmlTitle':	'foo',
- *					'slug':	'bar',
- *					'body':	'lots of foo and bars'
- *				},
- *				'sv' ...
- *			}
- *		}
- * @param func cb(err, page) - the page will be a row from getPages()
- */
-function savePage(data, cb) {
-	const	options	= {'exchange': dataWriter.exchangeName},
-		message	= {};
-
-	message.action	= 'savePage';
-	message.params	= {};
-
-	message.params.data	= data;
-
-	dataWriter.intercom.send(message, options, function (err, msgUuid) {
-		if (err) return cb(err);
-
-		dataWriter.emitter.once(msgUuid, cb);
-	});
-};
-
-function saveSnippet(data, cb) {
-	const	options	= {'exchange': dataWriter.exchangeName},
-		message	= {};
-
-	message.action	= 'saveSnippet';
-	message.params	= {};
-
-	message.params.data	= data;
-
-	dataWriter.intercom.send(message, options, function (err, msgUuid) {
-		if (err) return cb(err);
-
-		dataWriter.emitter.once(msgUuid, cb);
-	});
-}
-
-exports.dataWriter	= dataWriter;
-exports.getPages	= getPages;
-exports.getSnippets	= getSnippets;
-exports.options	= dataWriter.options;
-exports.rmPage	= rmPage;
-exports.rmSnippet	= rmSnippet;
-exports.savePage	= savePage;
-exports.saveSnippet	= saveSnippet;
+module.exports = exports = Cms;
