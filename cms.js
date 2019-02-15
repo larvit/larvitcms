@@ -7,6 +7,8 @@ const LUtils = require('larvitutils');
 
 class Cms {
 	constructor(options) {
+		const logPrefix = topLogPrefix + 'constructor() - ';
+
 		this.options = options || {};
 
 		if (!options.db) throw new Error('Missing required option "db"');
