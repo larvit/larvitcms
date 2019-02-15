@@ -2,6 +2,7 @@
 'use strict';
 
 const topLogPrefix = 'larvitcms: ./cms.js: ';
+const Intercom = require('larvitamintercom');
 const DataWriter = require(__dirname + '/dataWriter.js');
 const LUtils = require('larvitutils');
 
