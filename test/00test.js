@@ -74,7 +74,9 @@ before(function (done) {
 			db,
 			log,
 			lUtils
-		}, cb);
+		});
+
+		cmsLib.ready(cb);
 	});
 
 	async.series(tasks, function (err) {

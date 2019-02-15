@@ -240,6 +240,8 @@ class DataWriter {
 			return this.emitter.emit(msgUuid, err);
 		}
 
+		tasks.push(cb => this.ready(cb));
+
 		tasks.push(cb => {
 			this.db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [uuidBuffer], cb);
 		});
@@ -265,6 +267,8 @@ class DataWriter {
 
 			return this.emitter.emit(msgUuid, err);
 		}
+
+		tasks.push(cb => this.ready(cb));
 
 		tasks.push(cb => {
 			this.db.query('DELETE FROM cms_snippets WHERE name = ?', [options.name], cb);
@@ -300,6 +304,8 @@ class DataWriter {
 		}
 
 		this.log.debug(logPrefix + 'Running with data. "' + JSON.stringify(params.data) + '"');
+
+		tasks.push(cb => this.ready(cb));
 
 		tasks.push(cb => {
 			this.db.query('DELETE FROM cms_pagesData WHERE pageUuid = ?', [uuidBuffer], cb);
@@ -393,6 +399,8 @@ class DataWriter {
 
 			return this.emitter.emit(msgUuid, err);
 		}
+
+		tasks.push(cb => this.ready(cb));
 
 		tasks.push(cb => {
 			this.db.query(sql, dbFields, cb);

@@ -4,11 +4,9 @@
 const topLogPrefix = 'larvitcms: ./cms.js: ';
 const DataWriter = require(__dirname + '/dataWriter.js');
 const LUtils = require('larvitutils');
-const log = require('winston');
-const db = require('larvitdb');
 
 class Cms {
-	constructor(options, cb) {
+	constructor(options) {
 		this.options = options || {};
 
 		if (!options.db) throw new Error('Missing required option "db"');
@@ -55,8 +53,14 @@ class Cms {
 			amsync_host: this.options.amsync_host || null,
 			amsync_minPort: this.options.amsync_minPort || null,
 			amsync_maxPort: this.options.amsync_maxPort || null
-		}, cb);
+		}, err => {
+			if (err) this.log.error(logPrefix + 'Failed to initialize dataWriter:' + err.message);
+		});
 	};
+
+	ready(cb) {
+		this.dataWriter.ready(cb);
+	}
 
 	getPages(options, cb) {
 		const logPrefix = topLogPrefix + 'getPages() - ';
@@ -200,72 +204,74 @@ class Cms {
 	};
 
 	getSnippets(options, cb) {
-		const dbFields = [];
-		let sql;
+		this.ready(() => {
+			const dbFields = [];
+			let sql;
 
-		if (typeof options === 'function') {
-			cb = options;
-			options = {};
-		}
-
-		if (options.onlyNames) {
-			sql = 'SELECT DISTINCT name FROM cms_snippets ORDER BY name;';
-			db.query(sql, cb);
-
-			return;
-		}
-
-		sql = 'SELECT * FROM cms_snippets\n';
-		sql += 'WHERE 1 + 1\n';
-
-		if (options.names !== undefined) {
-			if (typeof options.names === 'string') {
-				options.names = [options.names];
+			if (typeof options === 'function') {
+				cb = options;
+				options = {};
 			}
 
-			if (options.names.length === 0) {
-				options.names = [''];
+			if (options.onlyNames) {
+				sql = 'SELECT DISTINCT name FROM cms_snippets ORDER BY name;';
+				db.query(sql, cb);
+
+				return;
 			}
 
-			sql += '	AND name IN (';
+			sql = 'SELECT * FROM cms_snippets\n';
+			sql += 'WHERE 1 + 1\n';
 
-			for (let i = 0; options.names[i] !== undefined; i++) {
-				sql += '?,';
-				dbFields.push(options.names[i]);
-			}
-
-			sql = sql.substring(0, sql.length - 1) + ')\n';
-		}
-
-		sql += 'ORDER BY name, lang';
-
-		this.db.query(sql, dbFields, (err, rows) => {
-			const snippets = [];
-
-			let snippet;
-			let prevName;
-
-			if (err) return cb(err);
-
-			for (let i = 0; rows[i] !== undefined; i++) {
-				if (prevName !== rows[i].name) {
-					if (snippet) {
-						snippets.push(snippet);
-					}
-
-					snippet = {name: rows[i].name, langs: {}};
+			if (options.names !== undefined) {
+				if (typeof options.names === 'string') {
+					options.names = [options.names];
 				}
 
-				prevName = rows[i].name;
-				snippet.langs[rows[i].lang] = rows[i].body;
+				if (options.names.length === 0) {
+					options.names = [''];
+				}
+
+				sql += '	AND name IN (';
+
+				for (let i = 0; options.names[i] !== undefined; i++) {
+					sql += '?,';
+					dbFields.push(options.names[i]);
+				}
+
+				sql = sql.substring(0, sql.length - 1) + ')\n';
 			}
 
-			// Add the last one
-			if (snippet) {
-				snippets.push(snippet);
-			}
+			sql += 'ORDER BY name, lang';
 
-			cb(null, snippets);
+			this.db.query(sql, dbFields, (err, rows) => {
+				const snippets = [];
+
+				let snippet;
+				let prevName;
+
+				if (err) return cb(err);
+
+				for (let i = 0; rows[i] !== undefined; i++) {
+					if (prevName !== rows[i].name) {
+						if (snippet) {
+							snippets.push(snippet);
+						}
+
+						snippet = {name: rows[i].name, langs: {}};
+					}
+
+					prevName = rows[i].name;
+					snippet.langs[rows[i].lang] = rows[i].body;
+				}
+
+				// Add the last one
+				if (snippet) {
+					snippets.push(snippet);
+				}
+
+				cb(null, snippets);
+			});
 		});
 	}
 
