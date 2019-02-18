@@ -1,17 +1,15 @@
 'use strict';
 
-const	utils	= require('../models/utils.js'),
-	cms	= require('larvitcms');
-
 exports.run = function (req, res, cb) {
-	const	data	= {'global': res.globalData};
+	const data = {global: res.globalData};
 
 	data.global.menuControllerName = 'adminCmsPages';
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
-	if ( ! res.adminRights) {
+	if (!res.adminRights) {
 		utils.deny(res);
+
 		return cb(null, req, res, null);
 	}
 
@@ -19,8 +17,8 @@ exports.run = function (req, res, cb) {
 		data.global.langs = res.langs;
 	}
 
-	cms.getPages({'limit': false}, function (err, rows) {
-		data.cmsPages	= rows;
+	req.cms.getPages({limit: false}, function (err, rows) {
+		data.cmsPages = rows;
 		cb(null, req, res, data);
 	});
 };

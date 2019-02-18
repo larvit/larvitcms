@@ -1,9 +1,9 @@
 'use strict';
 
-const	uuidLib	= require('uuid'),
-	lUtils	= require('larvitutils'),
-	async	= require('async'),
-	db	= require('larvitdb');
+const uuidLib = require('uuid');
+const lUtils = require('larvitutils');
+const async = require('async');
+const db = require('larvitdb');
 
 exports = module.exports = function (cb) {
 	const tasks = [];
