@@ -8,11 +8,14 @@ const LUtils = require('larvitutils');
 const amsync = require('larvitamsync');
 const async = require('async');
 
-class DataWriter {
-	constructor(options, cb) {
-		this.readyInProgress = false;
-		this.isReady = false;
+let isReady = false;
+let readyInProgress = false;
+let emitter = new EventEmitter();
 
+class DataWriter {
+	static get emitter() { return emitter; }
+
+	constructor(options) {
 		if (!options.log) {
 			const tmpLUtils = new LUtils();
 
@@ -27,9 +30,7 @@ class DataWriter {
 
 		this.lUtils = new LUtils({log: this.log});
 
-		this.emitter = new EventEmitter();
-
-		this.listenToQueue(cb);
+		this.listenToQueue();
 	}
 
 	listenToQueue(retries, cb) {
@@ -117,15 +118,15 @@ class DataWriter {
 			retries = 0;
 		}
 
-		if (this.isReady === true) return cb();
+		if (isReady === true) return cb();
 
-		if (this.readyInProgress === true) {
-			this.emitter.on('ready', cb);
+		if (readyInProgress === true) {
+			DataWriter.emitter.on('ready', cb);
 
 			return;
 		}
 
-		this.readyInProgress = true;
+		readyInProgress = true;
 
 		tasks.push(cb => {
 			if (this.mode === 'slave') {
@@ -164,8 +165,8 @@ class DataWriter {
 		async.series(tasks, err => {
 			if (err) return;
 
-			this.isReady = true;
-			this.emitter.emit('ready');
+			isReady = true;
+			DataWriter.emitter.emit('ready');
 
 			if (this.mode === 'master') {
 				this.runDumpServer(cb);
@@ -229,7 +230,7 @@ class DataWriter {
 
 			this.log.warn(logPrefix + err.message);
 
-			return this.emitter.emit(msgUuid, err);
+			return DataWriter.emitter.emit(msgUuid, err);
 		}
 
 		if (uuidBuffer === false) {
@@ -237,7 +238,7 @@ class DataWriter {
 
 			this.log.warn(logPrefix + err.message);
 
-			return this.emitter.emit(msgUuid, err);
+			return DataWriter.emitter.emit(msgUuid, err);
 		}
 
 		tasks.push(cb => this.ready(cb));
@@ -251,7 +252,7 @@ class DataWriter {
 		});
 
 		async.series(tasks, err => {
-			this.emitter.emit(msgUuid, err);
+			DataWriter.emitter.emit(msgUuid, err);
 		});
 	}
 
@@ -265,7 +266,7 @@ class DataWriter {
 
 			this.log.warn(logPrefix + err.message);
 
-			return this.emitter.emit(msgUuid, err);
+			return DataWriter.emitter.emit(msgUuid, err);
 		}
 
 		tasks.push(cb => this.ready(cb));
@@ -275,7 +276,7 @@ class DataWriter {
 		});
 
 		async.series(tasks, err => {
-			this.emitter.emit(msgUuid, err);
+			DataWriter.emitter.emit(msgUuid, err);
 		});
 	}
 
@@ -292,7 +293,7 @@ class DataWriter {
 
 			this.log.warn(logPrefix + err.message);
 
-			return this.emitter.emit(msgUuid, err);
+			return DataWriter.emitter.emit(msgUuid, err);
 		}
 
 		if (uuidBuffer === false) {
@@ -300,7 +301,7 @@ class DataWriter {
 
 			this.log.warn(logPrefix + err.message);
 
-			return this.emitter.emit(msgUuid, err);
+			return DataWriter.emitter.emit(msgUuid, err);
 		}
 
 		this.log.debug(logPrefix + 'Running with data. "' + JSON.stringify(params.data) + '"');
@@ -381,7 +382,7 @@ class DataWriter {
 		}
 
 		async.series(tasks, err => {
-			this.emitter.emit(msgUuid, err);
+			DataWriter.emitter.emit(msgUuid, err);
 		});
 	}
 
@@ -397,7 +398,7 @@ class DataWriter {
 
 			this.log.warn(logPrefix + err.message);
 
-			return this.emitter.emit(msgUuid, err);
+			return DataWriter.emitter.emit(msgUuid, err);
 		}
 
 		tasks.push(cb => this.ready(cb));
@@ -407,7 +408,7 @@ class DataWriter {
 		});
 
 		async.series(tasks, err => {
-			this.emitter.emit(msgUuid, err);
+			DataWriter.emitter.emit(msgUuid, err);
 		});
 	}
 }

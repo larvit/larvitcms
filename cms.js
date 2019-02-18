@@ -290,7 +290,7 @@ class Cms {
 		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
 			if (err) return cb(err);
 
-			this.dataWriter.emitter.once(msgUuid, cb);
+			DataWriter.emitter.once(msgUuid, cb);
 		});
 	}
 
@@ -306,7 +306,7 @@ class Cms {
 		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
 			if (err) return cb(err);
 
-			this.dataWriter.emitter.once(msgUuid, cb);
+			DataWriter.emitter.once(msgUuid, cb);
 		});
 	}
 
@@ -322,7 +322,7 @@ class Cms {
 		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
 			if (err) return cb(err);
 
-			this.dataWriter.emitter.once(msgUuid, cb);
+			DataWriter.emitter.once(msgUuid, cb);
 		});
 	};
 
@@ -338,7 +338,7 @@ class Cms {
 		this.dataWriter.intercom.send(message, options, (err, msgUuid) => {
 			if (err) return cb(err);
 
-			this.dataWriter.emitter.once(msgUuid, cb);
+			DataWriter.emitter.once(msgUuid, cb);
 		});
 	}
 }
