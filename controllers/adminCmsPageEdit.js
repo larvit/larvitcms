@@ -10,7 +10,7 @@ exports.run = function (req, res, cb) {
 	const pageUuid = res.globalData.urlParsed.query.uuid || uuid.v1();
 
 	data.global.menuControllerName = 'adminCmsPages';
-	data.cmsTemplates = req.lfs.getPathSync('config/cmsTemplates.json');
+	data.cmsTemplates = require(req.lfs.getPathSync('config/cmsTemplates.json'));
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
