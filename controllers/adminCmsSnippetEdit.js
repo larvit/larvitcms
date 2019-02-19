@@ -5,12 +5,12 @@ const async = require('async');
 
 exports.run = function (req, res, cb) {
 	const tasks = [];
+	const data = {global: res.globalData};
 	const name = res.globalData.urlParsed.query.name || slugify(res.globalData.formFields.name);
 
-	res.data = {global: res.globalData};
-	res.data.global.menuControllerName = 'adminCmsSnippets';
-	res.data.global.messages = [];
-	res.data.global.errors = [];
+	data.global.menuControllerName = 'adminCmsSnippets';
+	data.global.messages = [];
+	data.global.errors = [];
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
@@ -28,7 +28,7 @@ exports.run = function (req, res, cb) {
 			let field;
 
 			if (res.globalData.formFields.name === '') {
-				res.data.global.errors.push('Name must be specified');
+				data.global.errors.push('Name must be specified');
 
 				return cb();
 			}
@@ -58,7 +58,7 @@ exports.run = function (req, res, cb) {
 
 			async.series(tasks, function (err) {
 				if (err) {
-					res.data.global.errors.push('Save error: ' + err.message);
+					data.global.errors.push('Save error: ' + err.message);
 
 					return cb();
 				}
@@ -101,6 +101,6 @@ exports.run = function (req, res, cb) {
 	}
 
 	async.series(tasks, function (err) {
-		cb(err, req, res);
+		cb(err, req, res, data);
 	});
 };

@@ -3,8 +3,9 @@
 const utils = require('../models/utils.js');
 
 exports.run = function (req, res, cb) {
-	res.data = {global: res.globalData};
-	res.data.global.controllerName = 'adminCmsSnippets';
+	const data = {global: res.globalData};
+
+	data.global.controllerName = 'adminCmsSnippets';
 
 	// Make sure the user have the correct rights
 	// This is set in larvitadmingui controllerGlobal
@@ -15,11 +16,11 @@ exports.run = function (req, res, cb) {
 	}
 
 	if (res.langs) {
-		res.data.global.langs = res.langs;
+		data.global.langs = res.langs;
 	}
 
 	req.cms.getSnippets({onlyNames: true}, function (err, snippets) {
-		res.data.cmsSnippets = snippets;
+		data.cmsSnippets = snippets;
 		cb(null, req, res, data);
 	});
 };
