@@ -26,7 +26,7 @@
     "mocha": "5.2.0",
     "mocha-eslint": "5.0.0",
     "request": "2.88.0",
-    "validator": "9.4.1",
+    "validator": "10.11.0",
     "wait-for-port": "0.0.2"
   },
   "keywords": [
