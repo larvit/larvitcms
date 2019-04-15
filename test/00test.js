@@ -24,13 +24,11 @@ before(function (done) {
 	tasks.push(function (cb) {
 		let confFile;
 
-		for (const args of process.argv) {
-			if (args.startsWith('-confFile=')) {
-				confFile = args.split('=')[1];
-			}
+		if (process.env.TRAVIS) {
+			confFile = __dirname + '/../config/db_travis.json';
+		} else {
+			confFile = __dirname + '/../config/db_test.json';
 		}
-
-		if (!confFile) confFile = __dirname + '/../config/db_test.json';
 
 		log.verbose('DB config file: "' + confFile + '"');
 
