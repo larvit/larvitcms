@@ -179,9 +179,9 @@ class DataWriter {
 	runDumpServer(cb) {
 		const options = {
 			exchange: this.exchangeName + '_dataDump',
-			host: that.options.amsync ? that.options.amsync.host : null,
-			minPort: that.options.amsync ? that.options.amsync.minPort : null,
-			maxPort: that.options.amsync ? that.options.amsync.maxPort : null
+			host: this.options.amsync ? this.options.amsync.host : null,
+			minPort: this.options.amsync ? this.options.amsync.minPort : null,
+			maxPort: this.options.amsync ? this.options.amsync.maxPort : null
 		};
 
 		const args = [];
