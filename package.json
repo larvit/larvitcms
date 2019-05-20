@@ -9,7 +9,7 @@
   },
   "private": false,
   "dependencies": {
-    "async": "^2.5.0",
+    "async": "^3.0.0",
     "larvitamintercom": "^0.3.4",
     "larvitamsync": "^0.7.3",
     "larvitdb": "^2.1.1",
