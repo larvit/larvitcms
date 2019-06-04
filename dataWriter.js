@@ -188,13 +188,13 @@ class DataWriter {
 
 		if (this.db.conf.host) {
 			args.push('-h');
-			args.push(db.conf.host);
+			args.push(this.db.conf.host);
 		}
 
 		args.push('-u');
 		args.push(this.db.conf.user);
 
-		if (db.conf.password) {
+		if (this.db.conf.password) {
 			args.push('-p' + this.db.conf.password);
 		}
 
