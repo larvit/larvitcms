@@ -1,5 +1,5 @@
-<%= _.render('inc/head', obj) %>
-<%= _.render('inc/pageTop', obj) %>
+<%- include('inc/head', data) %>
+<%- include('inc/pageTop', data) %>
 <table>
 	<thead>
 		<tr>
@@ -9,13 +9,13 @@
 		</tr>
 	</thead>
 	<tbody>
-	<% _.each(cmsPages, function (page) { %>
+	<% _.each(data.cmsPages, function (page) { %>
 		<tr>
-			<td><a href="adminCmsPageEdit?langs=<% if(global.langs){print(global.langs.join(','));}else{print('en');} %>&uuid=<%= page.uuid %>"><%= page.uuid %></a></td>
+			<td><a href="adminCmsPageEdit?langs=<% if(data.global.langs){print(data.global.langs.join(','));}else{print('en');} %>&uuid=<%= page.uuid %>"><%= page.uuid %></a></td>
 			<td><%= page.name %></td>
 			<td><% if (page.published) print('Yes'); else print('No'); %></td>
 		</tr>
 	<% }) %>
 	</tbody>
 </table>
-<%= _.render('inc/pageBottom', obj) %>
+<%- include('inc/pageBottom', data) %>

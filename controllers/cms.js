@@ -11,13 +11,14 @@ function call404(req, res, cb) {
 		const err = new Error(logPrefix + 'call404() - 404 controller not found');
 
 		res.statusCode = 500;
-		data = {};
-		cb(err, req, res, {});
+		res.data = {};
+		cb(err);
 	}
 }
 
-exports.run = function (req, res, cb) {
-	const data = {global: res.globalData};
+function run(req, res, cb) {
+	res.data = {global: res.globalData};
+	const data = res.data;
 
 	if (req.lang === undefined) {
 		if (res.langs !== undefined && res.langs[0] !== undefined) {
@@ -36,7 +37,7 @@ exports.run = function (req, res, cb) {
 	}
 
 	req.cms.getPages({slugs: req.urlParsed.path}, function (err, pages) {
-		if (err) return cb(err, req, res, data);
+		if (err) return cb(err);
 
 		if (pages.length === 0) {
 			req.log.verbose(logPrefix + 'CMS controller called, but no page found for slug: "' + req.urlParsed.path + '"');
@@ -61,6 +62,9 @@ exports.run = function (req, res, cb) {
 			return;
 		}
 
-		cb(err, req, res, data);
+		cb(err);
 	});
 };
+
+module.exports = run;
+module.exports.run = run;

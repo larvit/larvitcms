@@ -2,8 +2,9 @@
 
 const utils = require('../models/utils.js');
 
-exports.run = function (req, res, cb) {
-	const data = {global: res.globalData};
+function run(req, res, cb) {
+	res.data = {global: res.globalData};
+	const data = res.data;
 
 	data.global.controllerName = 'adminCmsSnippets';
 
@@ -12,7 +13,7 @@ exports.run = function (req, res, cb) {
 	if (!res.adminRights) {
 		utils.deny(res);
 
-		return cb(null, req, res, null);
+		return cb(null);
 	}
 
 	if (res.langs) {
@@ -21,6 +22,9 @@ exports.run = function (req, res, cb) {
 
 	req.cms.getSnippets({onlyNames: true}, function (err, snippets) {
 		data.cmsSnippets = snippets;
-		cb(null, req, res, data);
+		cb(null);
 	});
 };
+
+module.exports = run;
+module.exports.run = run;

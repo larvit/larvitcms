@@ -3,9 +3,10 @@
 const slugify = require('larvitslugify');
 const async = require('async');
 
-exports.run = function (req, res, cb) {
+function run(req, res, cb) {
+	res.data = {global: res.globalData};
+	const data = res.data;
 	const tasks = [];
-	const data = {global: res.globalData};
 	const name = res.globalData.urlParsed.query.name || slugify(res.globalData.formFields.name);
 
 	data.global.menuControllerName = 'adminCmsSnippets';
@@ -17,7 +18,7 @@ exports.run = function (req, res, cb) {
 	if (!res.adminRights) {
 		utils.deny(res);
 
-		return cb(null, req, res, null);
+		return cb(null);
 	}
 
 	// Save a POSTed form
@@ -101,6 +102,9 @@ exports.run = function (req, res, cb) {
 	}
 
 	async.series(tasks, function (err) {
-		cb(err, req, res, data);
+		cb(err);
 	});
 };
+
+module.exports = run;
+module.exports.run = run;

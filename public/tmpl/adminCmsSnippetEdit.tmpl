@@ -1,5 +1,5 @@
-<%= _.render('inc/head', obj) %>
-<%= _.render('inc/pageTop', obj) %>
+<%- include('inc/head', data) %>
+<%- include('inc/pageTop', data) %>
 <script src="//tinymce.cachefly.net/4.2/tinymce.min.js"></script>
 <script>tinymce.init({
 	'selector': 'textarea',
@@ -10,7 +10,7 @@
 });</script>
 <form method="post">
 
-	<%= _.render('inc/adminCmsSnippetEditControls', obj) %>
+	<%- include('inc/adminCmsSnippetEditControls', data) %>
 
 	<fieldset>
 		<legend>Snippet</legend>
@@ -18,21 +18,21 @@
 		<div class="row">
 			<div class="three columns">
 				<label for="name">Name</label>
-				<input type="text" value="<%= global.urlParsed.query.name %>" name="name" <% if (global.urlParsed.query.name !== undefined) { print('readonly="readonly"'); }  %> />
+				<input type="text" value="<%= data.global.urlParsed.query.name %>" name="name" <% if (data.global.urlParsed.query.name !== undefined) { print('readonly="readonly"'); }  %> />
 			</div>
 		</div>
 
-	<% if ( ! global.urlParsed.query.langs) global.urlParsed.query.langs = 'en'; %>
+	<% if ( ! data.global.urlParsed.query.langs) data.global.urlParsed.query.langs = 'en'; %>
 
-	<% _.each(global.urlParsed.query.langs.split(','), function (lang) { %>
+	<% _.each(data.global.urlParsed.query.langs.split(','), function (lang) { %>
 		<div class="row">
 			<label for="body.<%= lang %>">Snippet content, language: <%= lang %></label>
-			<textarea class="u-full-width" name="body.<%= lang %>" rows="20"><% if (global.formFields['body.' + lang]) print(global.formFields['body.' + lang]) %></textarea>
+			<textarea class="u-full-width" name="body.<%= lang %>" rows="20"><% if (data.global.formFields['body.' + lang]) print(data.global.formFields['body.' + lang]) %></textarea>
 		</div>
 	</fieldset>
 	<% }); %>
 
-	<%= _.render('inc/adminCmsSnippetEditControls', obj) %>
+	<%- include('inc/adminCmsSnippetEditControls', data) %>
 
 </form>
-<%= _.render('inc/pageBottom', obj) %>
+<%- include('inc/pageBottom', data) %>

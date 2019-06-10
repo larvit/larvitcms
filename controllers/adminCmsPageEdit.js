@@ -4,8 +4,9 @@ const async = require('async');
 const uuid = require('uuid');
 const _ = require('lodash');
 
-exports.run = function (req, res, cb) {
-	const data = {global: res.globalData};
+function run(req, res, cb) {
+	res.data = {global: res.globalData};
+	const data = res.data;
 	const tasks = [];
 	const pageUuid = res.globalData.urlParsed.query.uuid || uuid.v1();
 
@@ -17,7 +18,7 @@ exports.run = function (req, res, cb) {
 	if (!res.adminRights) {
 		utils.deny(res);
 
-		return cb(null, req, res, null);
+		return cb(null);
 	}
 
 	// Save a POSTed form
@@ -136,6 +137,9 @@ exports.run = function (req, res, cb) {
 	}
 
 	async.series(tasks, function () {
-		cb(null, req, res, data);
+		cb(null);
 	});
 };
+
+module.exports = run;
+module.exports.run = run;
