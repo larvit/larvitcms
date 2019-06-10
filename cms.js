@@ -218,7 +218,7 @@ class Cms {
 
 			if (options.onlyNames) {
 				sql = 'SELECT DISTINCT name FROM cms_snippets ORDER BY name;';
-				db.query(sql, cb);
+				this.db.query(sql, cb);
 
 				return;
 			}
