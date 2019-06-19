@@ -13,7 +13,7 @@
     "larvitamintercom": "^0.3.4",
     "larvitamsync": "^0.7.3",
     "larvitdb": "^2.1.1",
-    "larvitdbmigration": "^4.0.2",
+    "larvitdbmigration": "^5.0.0",
     "larvitfs": "^2.3.1",
     "larvitslugify": "^1.0.0",
     "larvitutils": "^2.1.0",
