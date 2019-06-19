@@ -9,13 +9,13 @@
   },
   "private": false,
   "dependencies": {
-    "async": "^2.5.0",
+    "async": "^3.0.1",
     "larvitamintercom": "^0.3.4",
     "larvitamsync": "^0.7.3",
     "larvitdb": "^2.1.1",
     "larvitdbmigration": "^4.0.2",
     "larvitfs": "^2.3.1",
-    "larvitslugify": "^0.11.2",
+    "larvitslugify": "^1.0.0",
     "larvitutils": "^2.1.0",
     "lodash": "^4.17.4",
     "randomstring": "^1.1.5",
@@ -23,10 +23,10 @@
   },
   "devDependencies": {
     "larvitruncmd": "github:larvit/larvitruncmd",
-    "mocha": "6.1.3",
+    "mocha": "6.1.4",
     "mocha-eslint": "5.0.0",
     "request": "2.88.0",
-    "validator": "10.11.0",
+    "validator": "11.0.0",
     "wait-for-port": "0.0.2"
   },
   "keywords": [
