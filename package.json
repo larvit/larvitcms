@@ -12,7 +12,7 @@
     "async": "^3.0.1",
     "larvitamintercom": "^0.3.4",
     "larvitamsync": "^0.7.3",
-    "larvitdb": "^2.1.1",
+    "larvitdb": "^3.0.0",
     "larvitdbmigration": "^4.0.2",
     "larvitfs": "^2.3.1",
     "larvitslugify": "^1.0.0",
