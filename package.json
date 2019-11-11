@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "larvitruncmd": "github:larvit/larvitruncmd",
-    "mocha": "6.2.0",
+    "mocha": "6.2.2",
     "mocha-eslint": "5.0.0",
     "request": "2.88.0",
     "validator": "11.1.0",
