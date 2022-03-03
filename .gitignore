@@ -3,3 +3,5 @@ config/amqp.json
 config/db_test.json
 config/db.json
 node_modules
+coverage/
+.nyc_output/

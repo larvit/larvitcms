@@ -1,6 +1,6 @@
 {
   "name": "larvitcms",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Simple blog module with admin GUI for larvitadmingui",
   "author": {
     "name": "Mikael 'Lilleman' Göransson",
@@ -9,25 +9,17 @@
   },
   "private": false,
   "dependencies": {
-    "async": "^3.0.1",
-    "larvitamintercom": "^0.3.4",
-    "larvitamsync": "^0.7.3",
-    "larvitdb": "^2.1.1",
-    "larvitdbmigration": "^4.0.2",
-    "larvitfs": "^2.3.1",
-    "larvitslugify": "^1.0.0",
-    "larvitutils": "^2.1.0",
-    "lodash": "^4.17.4",
-    "randomstring": "^1.1.5",
-    "uuid": "^3.1.0"
+    "larvitdb": "3.2.0",
+    "larvitdbmigration": "6.1.0",
+    "larvitslugify": "2.0.1",
+    "larvitutils": "5.0.0",
+    "lodash": "4.17.21",
+    "uuid": "8.3.2"
   },
   "devDependencies": {
-    "larvitruncmd": "github:larvit/larvitruncmd",
-    "mocha": "6.2.2",
-    "mocha-eslint": "5.0.0",
-    "request": "2.88.2",
-    "validator": "11.1.0",
-    "wait-for-port": "0.0.2"
+    "eslint": "8.10.0",
+    "mocha": "9.2.1",
+    "nyc": "15.1.0"
   },
   "keywords": [
     "cms"
@@ -43,7 +35,10 @@
   },
   "homepage": "https://github.com/larvit/larvitcms",
   "scripts": {
-    "test": "mocha"
+    "lint": "eslint *.js test/*.js dbmigration/*.js",
+    "test:unit": "mocha --exit --bail './test/*.js'",
+    "coverage": "nyc --reporter lcov npm run test:unit",
+    "test": "npm run lint && npm run coverage"
   },
   "license": "MIT",
   "maintainers": [

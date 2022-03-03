@@ -1,98 +1,75 @@
 'use strict';
 
-const Intercom = require('larvitamintercom');
 const uuidLib = require('uuid');
-const slugify = require('larvitslugify');
+const { slugify } = require('larvitslugify');
 const assert = require('assert');
-const async = require('async');
-const LUtils = require('larvitutils');
-const lUtils = new LUtils();
-const log = new lUtils.Log('info');
+const { Utils, Log } = require('larvitutils');
 const Cms = require(__dirname + '/../cms.js');
-const db = require('larvitdb');
+const Db = require('larvitdb');
 const fs = require('fs');
-const _ = require('lodash');
+
+const lUtils = new Utils();
+const log = new Log('info');
 
 let cmsLib;
+let db;
 
-before(function (done) {
-	const tasks = [];
-
-	this.timeout(10000);
-
+before(async () => {
 	// Run DB Setup
-	tasks.push(function (cb) {
-		let confFile;
+	let confFile;
 
-		if (process.env.TRAVIS) {
-			confFile = __dirname + '/../config/db_travis.json';
-		} else {
-			confFile = __dirname + '/../config/db_test.json';
-		}
+	if (process.env.TRAVIS) {
+		confFile = __dirname + '/../config/db_travis.json';
+	} else {
+		confFile = __dirname + '/../config/db_test.json';
+	}
 
-		log.verbose('DB config file: "' + confFile + '"');
+	log.verbose('DB config file: "' + confFile + '"');
 
-		// First look for absolute path
-		fs.stat(confFile, function (err) {
-			if (err) {
-				// Then look for this string in the config folder
-				confFile = __dirname + '/../config/' + confFile;
-				fs.stat(confFile, function (err) {
-					if (err) throw err;
-					log.verbose('DB config: ' + JSON.stringify(require(confFile)));
-					db.setup(require(confFile), cb);
-				});
+	// First look for absolute path
+	let conf;
+	try {
+		await fs.promises.stat(confFile);
+		log.verbose('DB config: ' + JSON.stringify(require(confFile)));
+		conf = require(confFile);
+	// eslint-disable-next-line no-unused-vars
+	} catch (err) {
+		// Then look for this string in the config folder
+		confFile = __dirname + '/../config/' + confFile;
+		await fs.promises.stat(confFile);
+		log.verbose('DB config: ' + JSON.stringify(require(confFile)));
+		conf = require(confFile);
+	}
 
-				return;
-			}
-
-			log.verbose('DB config: ' + JSON.stringify(require(confFile)));
-			db.setup(require(confFile), cb);
-		});
+	db = new Db({
+		...conf,
+		log,
 	});
 
 	// Check for empty db
-	tasks.push(function (cb) {
-		db.query('SHOW TABLES', function (err, rows) {
-			if (err) throw err;
-
-			if (rows.length) {
-				throw new Error('Database is not empty. To make a test, you must supply an empty database!');
-			}
-
-			cb();
-		});
-	});
+	const { rows } = await db.query('SHOW TABLES');
+	if (rows.length) {
+		throw new Error('Database is not empty. To make a test, you must supply an empty database!');
+	}
 
 	// Load lib
-	tasks.push(function (cb) {
-		cmsLib = new Cms({
-			mode: 'noSync',
-			intercom: new Intercom('loopback interface'),
-			db,
-			log,
-			lUtils
-		});
-
-		cmsLib.ready(cb);
+	cmsLib = new Cms({
+		db,
+		log,
+		lUtils,
 	});
 
-	async.series(tasks, function (err) {
-		done(err);
-	});
+	await cmsLib.runDbMigrations();
 });
 
-after(function (done) {
-	db.removeAllTables(done);
+after(async () => {
+	await db.removeAllTables();
 });
 
 describe('Sanity test', function () {
-	it('Get pages of empty database', function (done) {
-		cmsLib.getPages({}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.deepEqual(pages, []);
-			done();
-		});
+	it('Get pages of empty database', async () => {
+		const pages = await cmsLib.getPages({});
+		assert.deepEqual(pages, []);
 	});
 });
 
@@ -106,14 +83,14 @@ describe('Cms page CRUD test', function () {
 			en: {
 				htmlTitle: 'foobar',
 				slug: 'bar',
-				body1: 'lots of foo and bars'
+				body1: 'lots of foo and bars',
 			},
 			sv: {
 				htmlTitle: 'sv_foobar',
 				slug: 'sv_bar',
-				body1: 'sv_lots of foo and bars'
-			}
-		}
+				body1: 'sv_lots of foo and bars',
+			},
+		},
 	};
 
 	const cmsPage2 = {
@@ -125,141 +102,89 @@ describe('Cms page CRUD test', function () {
 			en: {
 				htmlTitle: 'foobar2',
 				slug: 'bar2',
-				body1: 'lots of foo and bars2'
+				body1: 'lots of foo and bars2',
 			},
 			sv: {
 				htmlTitle: 'sv_foobar2',
 				slug: 'sv_ba??r2',
-				body1: 'sv_lots of foo and bars2'
-			}
-		}
+				body1: 'sv_lots of foo and bars2',
+			},
+		},
 	};
 
-	it('Create 2 new pages', function (done) {
-		const tasks = [];
+	it('Create 2 new pages', async () => {
+		await cmsLib.savePage(cmsPage);
+		await cmsLib.savePage(cmsPage2);
 
-		tasks.push(function (cb) {
-			cmsLib.savePage(cmsPage, cb);
-		});
+		const pages = await cmsLib.getPages();
+		assert.strictEqual(pages.length, 2);
 
-		tasks.push(function (cb) {
-			cmsLib.savePage(cmsPage2, cb);
-		});
+		assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+		assert.strictEqual(pages[0].name, 'foo');
+		assert.strictEqual(Object.keys(pages[0].langs).length, 2);
+		assert.strictEqual(pages[0].langs.en.htmlTitle, 'foobar');
+		assert.strictEqual(pages[0].langs.sv.htmlTitle, 'sv_foobar');
 
-		tasks.push(function (cb) {
-			cmsLib.getPages(function (err, pages) {
-				assert.strictEqual(pages.length, 2);
-				assert.strictEqual(err, null);
-
-				assert.strictEqual(pages[0].uuid, cmsPage.uuid);
-				assert.strictEqual(pages[0].name, 'foo');
-				assert.strictEqual(Object.keys(pages[0].langs).length, 2);
-				assert.strictEqual(pages[0].langs.en.htmlTitle, 'foobar');
-				assert.strictEqual(pages[0].langs.sv.htmlTitle, 'sv_foobar');
-
-				assert.strictEqual(pages[1].uuid, cmsPage2.uuid);
-				assert.strictEqual(pages[1].name, 'foo2');
-				assert.strictEqual(Object.keys(pages[1].langs).length, 2);
-				assert.strictEqual(pages[1].langs.en.htmlTitle, 'foobar2');
-				assert.strictEqual(pages[1].langs.sv.htmlTitle, 'sv_foobar2');
-
-				cb();
-			});
-		});
-
-		async.series(tasks, done);
+		assert.strictEqual(pages[1].uuid, cmsPage2.uuid);
+		assert.strictEqual(pages[1].name, 'foo2');
+		assert.strictEqual(Object.keys(pages[1].langs).length, 2);
+		assert.strictEqual(pages[1].langs.en.htmlTitle, 'foobar2');
+		assert.strictEqual(pages[1].langs.sv.htmlTitle, 'sv_foobar2');
 	});
 
-	it('Get page by uuid', function (cb) {
-		cmsLib.getPages({uuids: cmsPage.uuid}, function (err, pages) {
-			const page = pages[0];
+	it('Get page by uuid', async () => {
+		const pages = await cmsLib.getPages({uuids: cmsPage.uuid});
+		const page = pages[0];
 
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(err, null);
-			assert.strictEqual(page.uuid, cmsPage.uuid);
-			assert.strictEqual(page.name, 'foo');
-			assert.strictEqual(Object.keys(page.langs).length, 2);
-			assert.strictEqual(page.langs.en.htmlTitle, 'foobar');
-			assert.strictEqual(page.langs.sv.htmlTitle, 'sv_foobar');
-			cb();
-		});
+		assert.strictEqual(pages.length, 1);
+		assert.strictEqual(page.uuid, cmsPage.uuid);
+		assert.strictEqual(page.name, 'foo');
+		assert.strictEqual(Object.keys(page.langs).length, 2);
+		assert.strictEqual(page.langs.en.htmlTitle, 'foobar');
+		assert.strictEqual(page.langs.sv.htmlTitle, 'sv_foobar');
 	});
 
-	it('Get pages with limit', function (cb) {
-		cmsLib.getPages({limit: 1}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
-			cb();
-		});
+	it('Get pages with limit', async () => {
+		const pages = await cmsLib.getPages({limit: 1});
+		assert.strictEqual(pages.length, 1);
 	});
 
-	it('Get page by slug', function (cb) {
-		cmsLib.getPages({slugs: 'sv_bar'}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
-			cb();
-		});
+	it('Get page by slug', async () => {
+		const pages = await cmsLib.getPages({slugs: 'sv_bar'});
+		assert.strictEqual(pages.length, 1);
+		assert.strictEqual(pages[0].uuid, cmsPage.uuid);
 	});
 
-	it('Only get published pages', function (cb) {
-		cmsLib.getPages({published: true}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
-			cb();
-		});
+	it('Only get published pages', async () => {
+		const pages = await cmsLib.getPages({published: true});
+		assert.strictEqual(pages.length, 1);
+		assert.strictEqual(pages[0].uuid, cmsPage.uuid);
 	});
 
-	it('Get by uuid and only one lang', function (cb) {
-		cmsLib.getPages({uuids: cmsPage.uuid, langs: 'en'}, function (err, pages) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(pages.length, 1);
-			assert.strictEqual(pages[0].uuid, cmsPage.uuid);
-			assert.strictEqual(Object.keys(pages[0].langs).length, 1);
-			cb();
-		});
+	it('Get by uuid and only one lang', async () => {
+		const pages = await cmsLib.getPages({uuids: cmsPage.uuid, langs: 'en'});
+		assert.strictEqual(pages.length, 1);
+		assert.strictEqual(pages[0].uuid, cmsPage.uuid);
+		assert.strictEqual(Object.keys(pages[0].langs).length, 1);
 	});
 
-	it('Update cms page', function (cb) {
-		const updatePage = _.cloneDeep(cmsPage);
-		const tasks = [];
+	it('Update cms page', async () => {
+		const updatePage = JSON.parse(JSON.stringify(cmsPage));
 
 		updatePage.langs.en.body1 += ' and other stuff';
 
-		tasks.push(function (cb) {
-			cmsLib.savePage(updatePage, cb);
-		});
+		await cmsLib.savePage(updatePage);
 
-		tasks.push(function (cb) {
-			cmsLib.getPages({uuids: cmsPage.uuid}, function (err, pages) {
-				assert.strictEqual(err, null);
-				assert.strictEqual(pages.length, 1);
-				assert.strictEqual(pages[0].langs.en.body1, 'lots of foo and bars and other stuff');
-				cb();
-			});
-		});
-
-		async.series(tasks, cb);
+		const pages = await cmsLib.getPages({uuids: cmsPage.uuid});
+		assert.strictEqual(pages.length, 1);
+		assert.strictEqual(pages[0].langs.en.body1, 'lots of foo and bars and other stuff');
 	});
 
-	it('Remove cms page', function (cb) {
-		const tasks = [];
-
-		tasks.push(function (cb) {
-			cmsLib.rmPage(cmsPage2.uuid, cb);
-		});
-
-		tasks.push(function (cb) {
-			cmsLib.getPages(function (err, pages) {
-				assert.strictEqual(err, null);
-				assert.strictEqual(pages.length, 1);
-				assert.strictEqual(pages[0].uuid, cmsPage.uuid);
-				cb();
-			});
-		});
-
-		async.series(tasks, cb);
+	it('Remove cms page', async () => {
+		await cmsLib.rmPage(cmsPage2.uuid);
+		const pages = await cmsLib.getPages();
+		assert.strictEqual(pages.length, 1);
+		assert.strictEqual(pages[0].uuid, cmsPage.uuid);
 	});
 });
 
@@ -267,55 +192,44 @@ describe('Snippets CRUD', function () {
 	const snippet1 = {
 		body: 'body 1 en',
 		name: slugify('body 1 en'),
-		lang: 'en'
+		lang: 'en',
 	};
 
 	const snippet2 = {
 		body: 'body 2 sv',
 		name: slugify('body 2 sv'),
-		lang: 'sv'
+		lang: 'sv',
 	};
 
-	it('Create snippets', function (cb) {
-		const tasks = [];
+	it('Create snippets', async () => {
+		await cmsLib.saveSnippet(snippet1);
+		await cmsLib.saveSnippet(snippet2);
 
-		tasks.push(function (cb) {
-			cmsLib.saveSnippet(snippet1, cb);
-		});
-
-		tasks.push(function (cb) {
-			cmsLib.saveSnippet(snippet2, cb);
-		});
-
-		tasks.push(function (cb) {
-			cmsLib.getSnippets(function (err, snippets) {
-				assert.strictEqual(err, null);
-				assert.strictEqual(snippets.length, 2);
-				cb();
-			});
-		});
-
-		async.series(tasks, cb);
+		const snippets = await cmsLib.getSnippets();
+		assert.strictEqual(snippets.length, 2);
 	});
 
-	it('Get snippet by name', function (cb) {
-		cmsLib.getSnippets({names: slugify('body 1 en')}, function (err, snippets) {
-			assert.strictEqual(err, null);
-			assert.strictEqual(snippets.length, 1);
-			assert.strictEqual(snippets[0].langs.en, 'body 1 en');
-			cb();
-		});
+	it('Get snippet names', async () => {
+		const snippets = await cmsLib.getSnippets({ onlyNames: true });
+		assert.strictEqual(snippets.length, 2);
+		assert.deepStrictEqual(snippets[0], { name: slugify('body 1 en') });
+		assert.deepStrictEqual(snippets[1], { name: slugify('body 2 sv') });
 	});
 
-	it('Remove snippet by name', function (cb) {
-		cmsLib.rmSnippet(slugify('body 1 en'), function (err) {
-			if (err) throw err;
+	it('Get snippet by name', async () => {
+		const snippets = await cmsLib.getSnippets({names: slugify('body 1 en')});
+		assert.strictEqual(snippets.length, 1);
+		assert.strictEqual(snippets[0].langs.en, 'body 1 en');
+	});
 
-			cmsLib.getSnippets({names: slugify('body 1 en')}, function (err, snippets) {
-				assert.strictEqual(err, null);
-				assert.strictEqual(snippets.length, 0);
-				cb();
-			});
-		});
+	it('Get snippet by no names should give no result', async () => {
+		const snippets = await cmsLib.getSnippets({names: []});
+		assert.strictEqual(snippets.length, 0);
+	});
+
+	it('Remove snippet by name', async () => {
+		await cmsLib.rmSnippet(slugify('body 1 en'));
+		const snippets = await cmsLib.getSnippets({names: slugify('body 1 en')});
+		assert.strictEqual(snippets.length, 0);
 	});
 });

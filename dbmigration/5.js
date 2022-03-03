@@ -1,30 +1,20 @@
 'use strict';
 
 const uuidLib = require('uuid');
-const lUtils = require('larvitutils');
-const async = require('async');
-const db = require('larvitdb');
+const { Utils } = require('larvitutils');
 
-exports = module.exports = function (cb) {
-	const tasks = [];
+exports = module.exports = async context => {
+	const { db } = context;
 
-	db.query('SELECT id FROM cms_pages WHERE uuid IS NULL', function (err, rows) {
-		if (err) return cb(err);
+	const { rows } = await db.query('SELECT id FROM cms_pages WHERE uuid IS NULL');
+	if (rows.length === 0) return;
 
-		if (rows.length === 0) return cb();
+	const lUtils = new Utils();
 
-		for (const r of rows) {
-			const uuid = lUtils.uuidToBuffer(uuidLib.v1());
+	for (const r of rows) {
+		const uuid = lUtils.uuidToBuffer(uuidLib.v1());
 
-			tasks.push(function (cb) {
-				db.query('UPDATE cms_pages SET uuid = ? WHERE id = ?', [uuid, r.id], cb);
-			});
-
-			tasks.push(function (cb) {
-				db.query('UPDATE cms_pagesData SET pageUuid = ? WHERE pageId = ?', [uuid, r.id], cb);
-			});
-		}
-
-		async.series(tasks, cb);
-	});
+		await db.query('UPDATE cms_pages SET uuid = ? WHERE id = ?', [uuid, r.id]);
+		await db.query('UPDATE cms_pagesData SET pageUuid = ? WHERE pageId = ?', [uuid, r.id]);
+	}
 };
