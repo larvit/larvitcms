@@ -9,7 +9,7 @@
   },
   "private": false,
   "dependencies": {
-    "larvitdb": "3.2.0",
+    "larvitdb": "3.2.1",
     "larvitdbmigration": "6.1.0",
     "larvitslugify": "2.0.1",
     "larvitutils": "5.0.2",
