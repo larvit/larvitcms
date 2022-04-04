@@ -12,7 +12,7 @@
     "larvitdb": "3.2.3",
     "larvitdbmigration": "6.1.2",
     "larvitslugify": "2.0.1",
-    "larvitutils": "5.0.3",
+    "larvitutils": "5.0.4",
     "lodash": "4.17.21",
     "uuid": "8.3.2"
   },
