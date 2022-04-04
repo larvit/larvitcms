@@ -10,7 +10,7 @@
   "private": false,
   "dependencies": {
     "larvitdb": "3.2.3",
-    "larvitdbmigration": "6.1.0",
+    "larvitdbmigration": "6.1.2",
     "larvitslugify": "2.0.1",
     "larvitutils": "5.0.3",
     "lodash": "4.17.21",
