@@ -27,7 +27,7 @@ class DataWriter {
 		options.dbType = 'mariadb';
 		options.dbDriver = this.db;
 		options.tableName = 'cms_db_version';
-		options.migrationScriptsPath = __dirname + '/dbmigration';
+		options.migrationScriptPath = __dirname + '/dbmigration';
 		const dbMigration = new DbMigration(options);
 
 		await dbMigration.run();
