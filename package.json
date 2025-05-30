@@ -1,6 +1,6 @@
 {
   "name": "larvitcms",
-  "version": "3.0.128",
+  "version": "3.0.129",
   "description": "Simple blog module with admin GUI for larvitadmingui",
   "author": {
     "name": "Mikael 'Lilleman' Göransson",
@@ -17,7 +17,7 @@
     "uuid": "11.1.0"
   },
   "devDependencies": {
-    "eslint": "8.57.1",
+    "eslint": "9.28.0",
     "mocha": "11.5.0",
     "nyc": "17.1.0"
   },
