@@ -1,6 +1,6 @@
 {
   "name": "larvitcms",
-  "version": "3.0.146",
+  "version": "3.0.147",
   "description": "Simple blog module with admin GUI for larvitadmingui",
   "author": {
     "name": "Mikael 'Lilleman' Göransson",
@@ -9,10 +9,10 @@
   },
   "private": false,
   "dependencies": {
-    "larvitdb": "3.2.136",
-    "larvitdbmigration": "7.0.184",
+    "larvitdb": "3.2.137",
+    "larvitdbmigration": "7.0.186",
     "larvitslugify": "2.0.1",
-    "larvitutils": "5.1.168",
+    "larvitutils": "5.1.169",
     "lodash": "4.17.21",
     "uuid": "11.1.0"
   },
